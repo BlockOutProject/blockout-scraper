@@ -1,0 +1,169 @@
+{
+    "Élite Avenir": {
+        "M": ["EAM"]
+    },
+    "Élite": {
+        "M": ["Elite Masc."],
+        "F": ["Elite Fém."]
+    },
+    "Nationale 2": {
+        "M": ["N2 Masc."],
+        "F": ["N2 Fém."]
+    },
+    "Nationale 3": {
+        "M": ["N3 Masc."],
+        "F": ["N3 Fém."]
+    },
+    "Pré-nationale": {
+        "F": [
+            "PRENATIONAL FEMININS",
+            "PRENATIONALE FEMININE",
+            "PRÉ-NATIONALE FEMININE",
+            "PRE-NATIONALE FÉMININE",
+            "CHAMPIONNAT PRE-NATIONAL SENIOR FEMININ",
+            "PRE-NATIONALE FEMININES HDF",
+            "PRÉNATIONALE FEMININE OCCITANIE OUEST",
+            "PRÉNATIONALE FEMININE OCCITANIE EST",
+            "PRE NATIONALE FEMININE",
+            "CHAMPIONNAT PRE NATIONAL FEMININ",
+            "PRÉNATIONALE FÉMININE OCCITANIE OUEST",
+            "PRÉNATIONALE FÉMININE OCCITANIE EST",
+            "PRE-NATIONALE FEMININE",
+            "PRÉNATIONALE FEMININE"
+        ],
+        "M": [
+            "PRENATIONAL MASCULINS",
+            "PRENATIONALE MASCULINE",
+            "PRÉ-NATIONALE MASCULIN",
+            "CHAMPIONNAT PRE-NATIONAL SENIOR MASCULIN",
+            "PRE-NATIONALE MASCULINS HDF",
+            "PRÉNATIONALE MASCULINE OCCITANIE OUEST",
+            "PRÉNATIONALE MASCULINE OCCITANIE EST",
+            "PRE NATIONALE MASCULINE",
+            "RÉGIONALE 1 MASCULINE 24-25",
+            "PRE-NATIONALE MASCULINE",
+            "CHAMPIONNAT PRE NATIONAL MASCULIN",
+            "PRÉNATIONALE MASCULINE"
+        ]
+    },
+    "Régionale": {
+        "F": [
+            "REGIONAL FEMININS",
+            "RÉGIONALE FEMININE",
+            "REGIONAL FEMININ SENIOR",
+            "REGIONAL FEMININ",
+            "REGIONALE 1 FEMININES HDF",
+            "CHAMPIONNAT REGIONAL SENIOR FEMININ",
+            "RÉGIONALE FÉMININE OCCITANIE OUEST",
+            "RÉGIONALE FÉMININE OCCITANIE EST",
+            "REGIONALE SENIOR FEMME",
+            "RÉGIONALE 2 FEMININE 24-25",
+            "CHAMPIONNAT REGIONAL FEMININ",
+            "RÉGIONALE 1 FEMININE 24-25",
+            "REGIONALE 2 FEMININE",
+            "RÉGIONALE 2 FEMININE 2024-2025",
+            "RÉGIONALE 1 FEMININE 2024-2025",
+            "REGIONALE FEMININE",
+            "RÉGIONALE FÉMININE",
+            "RÉGIONALE 1 FEMININE",
+            "RÉGIONALE  FÉMININE",
+            "REGIONAL 1 FEMININE"
+        ],
+        "M": [
+            "REGIONAL MASCULINS",
+            "RÉGIONALE MASCULINE",
+            "REGIONAL MASCULIN SENIOR",
+            "REGIONAL MASCULIN",
+            "REGIONALE 1 MASCULINS HDF",
+            "CHAMPIONNAT REGIONAL SENIOR MASCULIN",
+            "RÉGIONALE MASCULINE OCCITANIE OUEST",
+            "RÉGIONALE MASCULINE OCCITANIE EST",
+            "RÉGIONALE 1 MASCULINE",
+            "CHAMPIONNAT REGIONAL MASCULIN",
+            "REGIONALE SENIOR HOMME",
+            "REGIONALE 2 MASCULINE",
+            "RÉGIONALE 2 MASCULINE 24-25",
+            "REGIONAL 1 MASCULINE",
+            "RÉGIONALE 1 MASCULINE 2024-2025",
+            "RÉGIONALE 2 MASCULINE 2024-2025",
+            "RÉGIONALE  MASCULINE",
+            "REGIONALE MASCULINE"
+        ]
+    },
+    "M18": {
+        "F": [
+            "CHAMPIONNAT M18 6X6 FEMININ",
+            "M18F EXCELLENCE",
+            "MOINS DE 18 FEMININES",
+            "PLAY OFF M18 FÉMININ",
+            "M18 FEMININES 6X6 1ERE PHASE HDF EXCELLENCE",
+            "M18 FEMININES 6X6 1ERE PHASE HDF HONNEUR",
+            "CHAMPIONNAT M18 FEMININ",
+            "M 18 FILLES",
+            "M18 EXCELLENCE FEMININ",
+            "CHAMPIONNAT MOINS DE 18 ANS FÉMININES",
+            "MOINS 18 ANS FÉMININES OCCITANIE EST",
+            "MOINS 18 ANS FÉMININES OCCITANIE OUEST"
+        ],
+        "M": [
+            "CHAMPIONNAT M18 6X6 MASCULIN",
+            "M18M EXCELLENCE",
+            "MOINS DE 18 MASCULINS",
+            "PLAY OFF M18 MASCULIN",
+            "M18 MASCULINS 6X6 1ERE PHASE HDF EXCELLENCE",
+            "M18 MASCULINS 6X6 1ERE PHASE HDF HONNEUR",
+            "CHAMPIONNAT M18 MASCULIN",
+            "M 18 GARÇONS",
+            "M18 EXCELLENCE MASCULIN",
+            "CHAMPIONNAT MOINS DE 18 ANS MASCULINS",
+            "MOINS 18 ANS MASCULINS OCCITANIE EST",
+            "MOINS 18 ANS MASCULINS OCCITANIE OUEST",
+            "MOINS DE 18 ANS MASCULIN"
+        ]
+    },
+    "M15": {
+        "F": [
+            "M15F EXCELLENCE",
+            "M 15 FILLES",
+            "MOINS DE 15 ANS FÉMININ",
+            "CHAMPIONNAT M15 FEMININ",
+            "M15 EXCELLENCE FEMININ",
+            "MOINS 15 ANS FÉMININES OCCITANIE EST",
+            "MOINS 15 ANS FÉMININES OCCITANIE OUEST"
+        ],
+        "M": [
+            "M15M EXCELLENCE",
+            "M 15 GARÇONS",
+            "MOINS DE 15 ANS MASCULIN",
+            "CHAMPIONNAT M15 MASCULIN",
+            "M15 EXCELLENCE MASCULIN",
+            "MOINS 15 ANS MASCULINS OCCITANIE OUEST"
+        ]
+    },
+    "M13": {
+        "F": [
+            "M 13 FILLES",
+            "MOINS DE 13 ANS FÉMININES OCCITANIE EST",
+            "MOINS DE 13 ANS FÉMININES OCCITANIE OUEST",
+            "MOINS 13 ANS FÉMININES OCCITANIE EST"
+        ],
+        "M": [
+            "M 13 GARÇONS",
+            "MOINS DE 13 ANS MASCULINS OCCITANIE EST",
+            "MOINS DE 13 ANS MASCULINS OCCITANIE OUEST",
+            "MOINS DE 13 ANS MASCULIN",
+            "CHAMPIONNAT M13 MASCULIN",
+            "MOINS 13 ANS MASCULINS OCCITANIE EST"
+        ]
+    },
+    "M21": {
+        "F": [
+            "M21 FEMININES 1ERE PHASE HDF NORD",
+            "MOINS 21 ANS FÉMININES OCCITANIE OUEST"
+        ],
+        "M": [
+            "M21 MASCULINS 1ERE PHASE HDF NORD",
+            "MOINS 21 ANS MASCULINS OCCITANIE OUEST"
+        ]
+    }
+}

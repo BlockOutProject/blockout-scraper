@@ -1,0 +1,3 @@
+pip : /Users/legel/Documents/Python/BlockOutVenv/bin/pip
+
+
