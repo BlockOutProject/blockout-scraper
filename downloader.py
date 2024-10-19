@@ -1,13 +1,10 @@
-# downloader.py
 import aiohttp
 import asyncio
 import logging
 from errors_handler import handle_errors
 
-# Importer le logger configuré
-logger = logging.getLogger('myvolley')
+logger = logging.getLogger('blockout')
 
-# Paramètres de configuration
 MAX_RETRIES = 3       # Nombre maximum de tentatives de téléchargement
 RETRY_DELAY = 2       # Délai en secondes entre chaque tentative en cas d'échec
 TIMEOUT = aiohttp.ClientTimeout(total=30)  # Timeout de 30 secondes pour chaque requête
@@ -57,7 +54,7 @@ async def download_csv(
                         # Écrire le contenu dans le fichier
                         with open(filename, 'w', encoding='utf-8', errors='replace') as f:
                             f.write(content)
-                        logger.info(f"CSV téléchargé avec succès: {filename}")
+                        logger.debug(f"CSV téléchargé avec succès: {filename}")
                         return filename  # Retourner le chemin du fichier après téléchargement réussi
                     else:
                         logger.warning(f"Tentative {attempt}/{MAX_RETRIES}: Échec du téléchargement pour {league_code}_{pool_code}, statut HTTP: {response.status}")
@@ -74,4 +71,4 @@ async def download_csv(
         else:
             logger.error(f"Échec du téléchargement pour {league_code}_{pool_code} après {MAX_RETRIES} tentatives.")
 
-    return None  # Retourner None en cas d'échec après plusieurs tentatives
+    return None

@@ -1,4 +1,3 @@
-# logger_config.py
 import logging
 import logging.config
 import yaml
@@ -24,6 +23,3 @@ def setup_logging(
     else:
         logging.basicConfig(level=default_level)
         logging.warning("Le fichier de configuration du logging est introuvable. Utilisation de la configuration par défaut.")
-
-# Appeler la configuration lors de l'importation du module
-setup_logging()

@@ -1,23 +1,23 @@
-# utils.py
 import os
 import json
 import re
 import csv
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
+import shutil
 from typing import Iterator, Optional
 from downloader import download_csv
 from errors_handler import handle_errors
-from services.teams_service import get_or_create_team
+from services.teams_service import add_or_update_team, desactivate_teams
 from session_manager import get_db_session
-from services.matchs_service import add_match
+from services.matchs_service import add_or_update_match, desactivate_matches
 
-# Importer le logger configuré
-logger = logging.getLogger('myvolley')
+logger = logging.getLogger('blockout')
 
 def create_output_directory(league: str) -> str:
     """
-    Crée un répertoire de sortie nommé avec la date et l'heure actuelles.
+    Crée un répertoire de sortie sous la structure CSV/league, 
+    nommé avec la date et l'heure actuelles.
 
     Parameters:
     - league (str): Le nom de la ligue.
@@ -25,38 +25,37 @@ def create_output_directory(league: str) -> str:
     Returns:
     - str: Le chemin du répertoire créé.
     """
-    now = datetime.now()
-    folder_name = now.strftime(f"{league}_%Y%m%d_%H%M%S")
+    now = datetime.now(timezone.utc)
+    folder_name = now.strftime(f"CSV/{league}/%Y%m%d_%H%M%S")
     os.makedirs(folder_name, exist_ok=True)
     logger.debug(f"Répertoire de sortie créé: {folder_name}")
     return folder_name
 
-# Charger le fichier JSON des divisions standardisées
 try:
-    with open('scraper/standardized_divisions.json', 'r', encoding='utf-8') as f:
+    with open('standardized_divisions.json', 'r', encoding='utf-8') as f:
         standardized_divisions = json.load(f)
 except Exception as e:
     logger.error(f"Erreur lors du chargement de 'standardized_divisions.json': {e}")
     standardized_divisions = {}
 
-def standardize_division(division: str) -> dict:
+def standardize_division_name(division_name: str) -> dict:
     """
     Standardise le nom d'une division en fonction des variations prédéfinies.
 
     Parameters:
-    - division (str): Le nom de la division à standardiser.
+    - division_name (str): Le nom de la division à standardiser.
 
     Returns:
     - dict: Un dictionnaire contenant le nom standardisé et le genre.
     """
     for category, genders in standardized_divisions.items():
         for gender, variations in genders.items():
-            if division.strip() in variations:
-                logger.debug(f"Division standardisée trouvée: {division} -> {category}, Genre: {gender}")
+            if division_name in variations:
+                logger.debug(f"Division standardisée trouvée: {division_name} -> {category}, Genre: {gender}")
                 return {"division": category, "gender": gender}
     # Retourne la division originale si aucune correspondance n'est trouvée
-    logger.warning(f"Division non standardisée: {division}")
-    return {"division": division.strip(), "gender": None}
+    logger.debug(f"Division non standardisée: {division_name}")
+    return {"division": division_name.strip(), "gender": None}
 
 def parse_season(season_str: str) -> int:
     """
@@ -108,9 +107,9 @@ def extract_national_division(pool_name: str) -> str:
     Returns:
     - str: La division nationale extraite.
     """
-    division = pool_name.split('Poule')[0].strip()
-    logger.debug(f"Division nationale extraite du nom de poule '{pool_name}': {division}")
-    return division
+    division_name = pool_name.split('Poule')[0].strip()
+    logger.debug(f"Division nationale extraite du nom de poule '{pool_name}': {division_name}")
+    return division_name
 
 def parse_csv(file_path: str) -> Iterator[dict]:
     """
@@ -135,11 +134,11 @@ def parse_csv(file_path: str) -> Iterator[dict]:
                 'team_b_name': row.get('EQB_nom'),
                 'match_date': row.get('Date'),
                 'match_time': row.get('Heure'),
+                'set': row.get('Set'),
                 'score': row.get('Score'),
                 'venue': row.get('Salle'),
                 'referee1': row.get('Arb1'),
                 'referee2': row.get('Arb2'),
-                'status': "completed" if row.get('Score') else "upcoming"
             }
 
 def parse_date(date_str: str, time_str: str) -> Optional[datetime]:
@@ -203,7 +202,7 @@ async def handle_csv_download_and_parse(
     - season (str): La saison.
     - folder (str): Le dossier de sauvegarde.
     """
-    logger.info(f"Téléchargement du CSV pour Pool ID: {pool_id}, League Code: {league_code}, Pool Code: {pool_code}")
+    logger.debug(f"Téléchargement du CSV pour Pool ID: {pool_id}, League Code: {league_code}, Pool Code: {pool_code}")
     csv_path = await download_csv(http_session, league_code, pool_code, season, folder)
     if csv_path:
         logger.debug(f"CSV téléchargé avec succès: {csv_path}")
@@ -220,41 +219,70 @@ async def parse_and_add_matches_from_csv(pool_id: int, csv_path: str) -> None:
     - pool_id (int): L'ID de la pool.
     - csv_path (str): Le chemin du fichier CSV.
     """
-    logger.info(f"Parsing et ajout des matchs depuis le CSV: {csv_path}")
+    logger.debug(f"Parsing et ajout des matchs depuis le CSV: {csv_path}")
+    scraped_team_names = set()
+    scraped_match_codes = set()
     with get_db_session() as session:
         for data in parse_csv(csv_path):
-            match_datetime = parse_date(data['match_date'], data['match_time'])
-            if not match_datetime:
-                logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
-                continue  # Ignorer les dates invalides
+            club_a_id = data['club_a_id']
+            club_b_id = data['club_b_id']
+            if club_a_id and club_b_id:
+                match_datetime = parse_date(data['match_date'], data['match_time'])
+                if not match_datetime:
+                    logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
+                    continue 
 
-            team_a_id = get_or_create_team(
-                session,
-                pool_id=pool_id,
-                club_id=data['club_a_id'],
-                team_name=data['team_a_name']
-            )
+                team_a = add_or_update_team(
+                    session,
+                    pool_id=pool_id,
+                    club_id=data['club_a_id'],
+                    team_name=data['team_a_name']
+                )
 
-            team_b_id = get_or_create_team(
-                session,
-                pool_id=pool_id,
-                club_id=data['club_b_id'],
-                team_name=data['team_b_name']
-            )
+                team_b = add_or_update_team(
+                    session,
+                    pool_id=pool_id,
+                    club_id=data['club_b_id'],
+                    team_name=data['team_b_name']
+                )
+                
+                scraped_team_names.add(team_a.team_name)
+                scraped_team_names.add(team_b.team_name)
 
-            add_match(
-                session,
-                league_code=data['league_code'],
-                match_code=data['match_code'],
-                pool_id=pool_id,
-                team_a_id=team_a_id,
-                team_b_id=team_b_id,
-                match_date=match_datetime,
-                score=data['score'],
-                status=data['status'],
-                venue=data['venue'],
-                referee1=data['referee1'],
-                referee2=data['referee2']
-            )
-        logger.info(f"Matchs ajoutés depuis le CSV: {csv_path}")
-        # Le commit est géré par le context manager
+                match = add_or_update_match(
+                    session,
+                    league_code=data['league_code'],
+                    match_code=data['match_code'],
+                    pool_id=pool_id,
+                    team_a_id=team_a.id,
+                    team_b_id=team_b.id,
+                    match_date=match_datetime,
+                    set=data['set'],
+                    score=data['score'],
+                    venue=data['venue'],
+                    referee1=data['referee1'],
+                    referee2=data['referee2']
+                )
+                
+                scraped_match_codes.add(match.match_code)
+                
+        desactivate_teams(session, pool_id, scraped_team_names)
+        desactivate_matches(session, pool_id, scraped_match_codes)
+        logger.debug(f"Matchs ajoutés depuis le CSV: {csv_path}")
+
+def delete_output_directory(folder_path: str) -> None:
+    """
+    Supprime un répertoire de sortie et tout son contenu.
+
+    Parameters:
+    - folder_path (str): Le chemin du répertoire à supprimer.
+    """
+    try:
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
+            logger.debug(f"Répertoire supprimé: {folder_path}")
+        else:
+            logger.warning(f"Tentative de suppression : le répertoire {folder_path} n'existe pas.")
+    except Exception as e:
+        logger.error(f"Erreur lors de la suppression du répertoire : {str(e)}")
+        raise

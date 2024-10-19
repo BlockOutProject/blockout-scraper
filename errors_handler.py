@@ -1,15 +1,13 @@
-# errors_handler.py
 import functools
 import asyncio
 import logging
 
-# Importer le logger configuré
-logger = logging.getLogger('myvolley')
+logger = logging.getLogger('blockout')
 
 def handle_errors(func):
     """
     Décorateur pour gérer les erreurs des fonctions synchrones et asynchrones.
-    Log l'erreur avec la trace complète et continue l'exécution.
+    Log l'erreur avec la trace complète et relance l'exception.
     """
     if asyncio.iscoroutinefunction(func):
         @functools.wraps(func)
@@ -21,7 +19,7 @@ def handle_errors(func):
                     f"Erreur dans la fonction asynchrone '{func.__name__}': {e}",
                     exc_info=True
                 )
-                return None
+                raise
         return async_wrapper
     else:
         @functools.wraps(func)
@@ -33,5 +31,5 @@ def handle_errors(func):
                     f"Erreur dans la fonction synchrone '{func.__name__}': {e}",
                     exc_info=True
                 )
-                return None
+                raise
         return sync_wrapper

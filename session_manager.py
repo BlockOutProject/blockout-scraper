@@ -4,10 +4,8 @@ from sqlalchemy.orm import sessionmaker
 from db import engine
 import logging
 
-# Importer le logger
-logger = logging.getLogger('myvolley')
+logger = logging.getLogger('blockout')
 
-# Fabrique de sessions pour la base de données
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @contextmanager

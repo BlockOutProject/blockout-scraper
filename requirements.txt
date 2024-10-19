@@ -1,5 +1,8 @@
 aiohttp
+pytest
 beautifulsoup4
 requests
 sqlalchemy
 pyyaml
+APScheduler
+psycopg2-binary
