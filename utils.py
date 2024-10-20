@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 import re
@@ -6,11 +7,14 @@ from datetime import datetime, timezone
 import logging
 import shutil
 from typing import Iterator, Optional
+
+import aiohttp
 from downloader import download_csv
 from errors_handler import handle_errors
-from services.teams_service import add_or_update_team, desactivate_teams
+from models.match import MatchStatus
+from services.matchs_service import add_or_update_match, deactivate_matches
+from services.teams_service import add_or_update_team, deactivate_teams
 from session_manager import get_db_session
-from services.matchs_service import add_or_update_match, desactivate_matches
 
 logger = logging.getLogger('blockout')
 
@@ -59,25 +63,32 @@ def standardize_division_name(division_name: str) -> dict:
 
 def parse_season(season_str: str) -> int:
     """
-    Convertit une chaîne de saison 'YYYY/YYYY' en un entier 'YYYY'.
+    Convertit une chaîne de saison 'YYYY/YYYY' en un entier combiné 'YYYYYY' 
+    en prenant les deux derniers chiffres de chaque année.
 
     Parameters:
     - season_str (str): La chaîne de la saison au format 'YYYY/YYYY'.
 
     Returns:
-    - int: L'année de début de la saison.
+    - int: La combinaison des deux dernières années (ex: 2024/2025 -> 2425).
 
     Raises:
     - ValueError: Si le format de la saison est invalide.
     """
     try:
-        start_year = int(season_str.split('/')[0])
-        logger.debug(f"Saison parsée: {season_str} -> {start_year}")
-        return start_year
+        # Séparer les années et prendre les deux derniers chiffres de chaque année
+        start_year, end_year = season_str.split('/')
+        start_year_last_two = start_year[-2:]  # Derniers chiffres de l'année de début
+        end_year_last_two = end_year[-2:]  # Derniers chiffres de l'année de fin
+
+        # Concaténer les deux derniers chiffres des deux années et convertir en entier
+        combined_years = int(start_year_last_two + end_year_last_two)
+        
+        logger.debug(f"Saison parsée: {season_str} -> {combined_years}")
+        return combined_years
     except Exception as e:
         logger.error(f"Erreur lors du parsing de la saison '{season_str}': {e}")
         raise ValueError(f"Erreur lors du traitement de la saison: {e}")
-
 def extract_season_from_url(url: str) -> Optional[str]:
     """
     Extrait la saison à partir de l'URL.
@@ -204,25 +215,28 @@ async def handle_csv_download_and_parse(
     """
     logger.debug(f"Téléchargement du CSV pour Pool ID: {pool_id}, League Code: {league_code}, Pool Code: {pool_code}")
     csv_path = await download_csv(http_session, league_code, pool_code, season, folder)
+    
     if csv_path:
         logger.debug(f"CSV téléchargé avec succès: {csv_path}")
-        await parse_and_add_matches_from_csv(pool_id, csv_path)
+        await parse_and_add_matches_from_csv(http_session, pool_id, csv_path)
     else:
         logger.error(f"Échec du téléchargement du CSV pour Pool Code: {pool_code}")
 
 @handle_errors
-async def parse_and_add_matches_from_csv(pool_id: int, csv_path: str) -> None:
+async def parse_and_add_matches_from_csv(http_session, pool_id: int, csv_path: str) -> None:
     """
-    Parse le fichier CSV et ajoute les matchs à la base de données.
+    Parse le fichier CSV et ajoute les matchs et les équipes via des appels API REST.
 
     Parameters:
+    - http_session: La session aiohttp.
     - pool_id (int): L'ID de la pool.
     - csv_path (str): Le chemin du fichier CSV.
     """
     logger.debug(f"Parsing et ajout des matchs depuis le CSV: {csv_path}")
     scraped_team_names = set()
     scraped_match_codes = set()
-    with get_db_session() as session:
+
+    async with aiohttp.ClientSession() as session:
         for data in parse_csv(csv_path):
             club_a_id = data['club_a_id']
             club_b_id = data['club_b_id']
@@ -232,44 +246,49 @@ async def parse_and_add_matches_from_csv(pool_id: int, csv_path: str) -> None:
                     logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
                     continue 
 
-                team_a = add_or_update_team(
-                    session,
-                    pool_id=pool_id,
-                    club_id=data['club_a_id'],
-                    team_name=data['team_a_name']
-                )
+                # Ajouter ou mettre à jour les équipes via API
+                team_a_data = {
+                    "team_name": data['team_a_name'],
+                    "club_id": data['club_a_id'],
+                    "pool_id": pool_id
+                }
+                team_b_data = {
+                    "team_name": data['team_b_name'],
+                    "club_id": data['club_b_id'],
+                    "pool_id": pool_id
+                }
 
-                team_b = add_or_update_team(
-                    session,
-                    pool_id=pool_id,
-                    club_id=data['club_b_id'],
-                    team_name=data['team_b_name']
-                )
-                
-                scraped_team_names.add(team_a.team_name)
-                scraped_team_names.add(team_b.team_name)
+                team_a = await add_or_update_team(session, team_a_data)
+                team_b = await add_or_update_team(session, team_b_data)
 
-                match = add_or_update_match(
-                    session,
-                    league_code=data['league_code'],
-                    match_code=data['match_code'],
-                    pool_id=pool_id,
-                    team_a_id=team_a.id,
-                    team_b_id=team_b.id,
-                    match_date=match_datetime,
-                    set=data['set'],
-                    score=data['score'],
-                    venue=data['venue'],
-                    referee1=data['referee1'],
-                    referee2=data['referee2']
-                )
-                
-                scraped_match_codes.add(match.match_code)
-                
-        desactivate_teams(session, pool_id, scraped_team_names)
-        desactivate_matches(session, pool_id, scraped_match_codes)
-        logger.debug(f"Matchs ajoutés depuis le CSV: {csv_path}")
+                if team_a and team_b:
+                    scraped_team_names.add(team_a['team_name'])
+                    scraped_team_names.add(team_b['team_name'])
 
+                    # Ajouter ou mettre à jour le match via API
+                    match_data = {
+                        "match_code": data['match_code'],
+                        "league_code": data['league_code'],
+                        "pool_id": pool_id,
+                        "team_id_a": team_a['id'],
+                        "team_id_b": team_b['id'],
+                        "match_date": match_datetime,
+                        "set": data['set'],
+                        "score": data['score'],
+                        "status": MatchStatus.COMPLETED.value if data['set'] and data['score'] else MatchStatus.UPCOMING.value,
+                        "venue": data['venue'],
+                        "referee1": data['referee1'],
+                        "referee2": data['referee2']
+                    }
+                    await add_or_update_match(session, match_data)
+                    scraped_match_codes.add(data['match_code'])
+                    
+        await asyncio.gather(
+            deactivate_teams(session, pool_id, scraped_team_names),
+            deactivate_matches(session, pool_id, scraped_match_codes)
+        )
+        logger.debug(f"Terminé l'ajout des matchs depuis le CSV: {csv_path}")
+        
 def delete_output_directory(folder_path: str) -> None:
     """
     Supprime un répertoire de sortie et tout son contenu.

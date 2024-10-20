@@ -10,6 +10,7 @@ from scrapers.national_scraper import scrape_national_pools
 from scrapers.pro_scraper import scrape_pro_pools
 from scrapers.regional_scraper import scrape_regional_pools
 from services.execution_logs_service import log_execution
+#from services.matchs_service import log_started_matches
 from services.matchs_service import log_started_matches
 from session_manager import get_db_session
 
@@ -54,7 +55,7 @@ async def main():
             
             finally:
                 accumulating_handler.clear_logs()
-                log_started_matches(session)
+                await log_started_matches()
 
 def schedule_scraper():
     """

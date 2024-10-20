@@ -1,9 +1,10 @@
 import asyncio
+import aiohttp
 from bs4 import BeautifulSoup
 import logging
 from errors_handler import handle_errors
 from models.pool import PoolDivisionCode
-from services.pools_service import add_or_update_pool, desactivate_pools
+from services.pools_service import add_or_update_pool, deactivate_pools
 from session_manager import get_db_session
 from utils import (
     create_output_directory,
@@ -38,7 +39,7 @@ async def scrape_national_pools(http_session):
     soup = BeautifulSoup(html_content, 'html.parser')
     tasks = []
     scraped_pool_codes = set()
-    with get_db_session() as pool_session:
+    async with aiohttp.ClientSession() as session:
         for a_tag in soup.find_all('a', href=lambda href: href and href.endswith('.htm')):
             href = a_tag['href']
             pool_name = a_tag.get_text(strip=True)
@@ -50,29 +51,32 @@ async def scrape_national_pools(http_session):
             raw_division_name = extract_national_division(pool_name)
             standardized = standardize_division_name(raw_division_name)
             league_code = "ABCCS"
+            league_name = "NATIONAL"
             
             scraped_pool_codes.add(pool_code)
+            
+            pool_data = {
+                "pool_code": pool_code,
+                "league_code": league_code,
+                "season": parse_season(season),
+                "league_name": league_name,
+                "pool_name": pool_name,
+                "division_code": PoolDivisionCode.NAT.value,
+                "division_name": standardized["division"],
+                "gender": standardized["gender"],
+                "raw_division_name": raw_division_name
+            }
+            
+            new_pool = await add_or_update_pool(session, pool_data)
+            if new_pool:
+                pool_id = new_pool['id']
 
-            new_pool = add_or_update_pool(
-                pool_session,
-                pool_code=pool_code,
-                league_code=league_code,
-                season=parse_season(season),
-                league_name="NATIONAL",
-                pool_name=pool_name,
-                division_code=PoolDivisionCode.NAT,
-                division_name=standardized["division"],
-                gender=standardized["gender"],
-                raw_division_name=raw_division_name
-            )
-            pool_id = new_pool.id
-
-            task = handle_csv_download_and_parse(
-                http_session, pool_id, league_code, pool_code, season, folder
-            )
-            tasks.append(task)
-        desactivate_pools(pool_session, league_code, scraped_pool_codes)
+                task = handle_csv_download_and_parse(
+                    http_session, pool_id, league_code, pool_code, season, folder
+                )
+                tasks.append(task)
+        #deactivate_pools(pool_session, league_code, scraped_pool_codes)
 
     await asyncio.gather(*tasks)
     logger.debug("Poules nationales ajoutées à la base de données.")
-    delete_output_directory(folder)
+    #delete_output_directory(folder)

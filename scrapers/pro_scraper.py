@@ -1,10 +1,11 @@
 # pro_scraper.py
 import asyncio
 import logging
+
+import aiohttp
 from errors_handler import handle_errors
 from models.pool import PoolDivisionCode
 from services.pools_service import add_or_update_pool
-from session_manager import get_db_session
 from utils import (
     create_output_directory,
     delete_output_directory,
@@ -35,27 +36,32 @@ async def scrape_pro_pools(http_session):
 
     tasks = []
 
-    with get_db_session() as db_session:
+    async with aiohttp.ClientSession() as session:
         logger.debug("Début du scraping des poules professionnelles.")
+        
         for pool in pools:
-            new_pool = add_or_update_pool(
-                db_session,
-                pool_code=pool['code'],
-                league_code=league_code,
-                season=parse_season(season),
-                league_name=league_name,
-                pool_name=pool['pool_name'],
-                division_code=PoolDivisionCode.PRO,
-                division_name=pool['division_name'],
-                gender=pool['gender']
-            )
-            pool_id = new_pool.id
+            pool_data = {
+                "pool_code": pool['code'],
+                "league_code": league_code,
+                "season": parse_season(season),
+                "league_name": league_name,
+                "pool_name": pool['pool_name'],
+                "division_code": PoolDivisionCode.PRO.value,
+                "division_name": pool['division_name'],
+                "gender": pool['gender']
+            }
 
-            task = handle_csv_download_and_parse(
-                http_session, pool_id, league_code, pool['code'], season, folder
-            )
-            tasks.append(task)
+            new_pool = await add_or_update_pool(session, pool_data)
+            if new_pool:
+                pool_id = new_pool['id']
 
-    await asyncio.gather(*tasks)
-    logger.debug("Poules professionnelles ajoutées à la base de données.")
+                # Gestion du téléchargement et parsing du CSV
+                task = handle_csv_download_and_parse(
+                    http_session, pool_id, league_code, pool['code'], season, folder
+                )
+                tasks.append(task)
+
+        await asyncio.gather(*tasks)
+
+    logger.debug("Poules professionnelles ajoutées à la base de données via API.")
     delete_output_directory(folder)

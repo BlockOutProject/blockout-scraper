@@ -1,22 +1,18 @@
-from datetime import datetime, timezone
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
-from .base import Base
+from dataclasses import dataclass
+from typing import Optional
 
-class Team(Base):
-    __tablename__ = 'teams'
+@dataclass
+class Team:
+    club_id: str
+    pool_id: int
+    team_name: str
+    active: bool = True
 
-    id = Column(Integer, primary_key=True)
-    club_id = Column(String, nullable=False)
-    pool_id = Column(Integer, ForeignKey('pools.id'), nullable=False)
-    team_name = Column(String, nullable=False)
-
-    pool = relationship('Pool', back_populates='teams')
-    matches_home = relationship('Match', back_populates='team_a', foreign_keys='Match.team_a_id', cascade='all, delete-orphan')
-    matches_away = relationship('Match', back_populates='team_b', foreign_keys='Match.team_b_id', cascade='all, delete-orphan')
-    last_update = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    active = Column(Boolean, default=True)
-
-    __table_args__ = (
-        UniqueConstraint('pool_id', 'team_name', name='uix_team'),
-    )
+    def to_dict(self):
+        """Convertit l'objet Team en dictionnaire prêt à être envoyé à l'API."""
+        return {
+            "club_id": self.club_id,
+            "pool_id": self.pool_id,
+            "team_name": self.team_name,
+            "active": self.active
+        }

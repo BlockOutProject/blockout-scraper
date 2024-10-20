@@ -1,33 +1,36 @@
-from datetime import datetime, timezone
-from sqlalchemy import Column, DateTime, Integer, String, Boolean, UniqueConstraint, Enum
-from sqlalchemy.orm import relationship
-from .base import Base
-from enum import Enum as PyEnum
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional
 
-class PoolDivisionCode(PyEnum):
+class PoolDivisionCode(Enum):
     REG = "REG"
     NAT = "NAT"
     PRO = "PRO"
 
-class Pool(Base):
-    __tablename__ = 'pools'
+@dataclass
+class Pool:
+    pool_code: str
+    league_code: str
+    season: int
+    division_code: PoolDivisionCode
+    league_name: Optional[str] = None
+    pool_name: Optional[str] = None
+    division_name: Optional[str] = None
+    gender: Optional[str] = None
+    raw_division_name: Optional[str] = None
+    active: bool = True
 
-    id = Column(Integer, primary_key=True)
-    pool_code = Column(String, nullable=False)
-    league_code = Column(String, nullable=False)
-    season = Column(Integer, nullable=False)
-    league_name = Column(String)
-    pool_name = Column(String)
-    division_code = Column(Enum(PoolDivisionCode), nullable=False)
-    division_name = Column(String)
-    gender = Column(String)
-    raw_division_name = Column(String)
-    last_update = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    active = Column(Boolean, default=True)
-
-    teams = relationship('Team', back_populates='pool', cascade='all, delete-orphan')
-    matches = relationship('Match', back_populates='pool', cascade='all, delete-orphan')
-
-    __table_args__ = (
-        UniqueConstraint('pool_code', 'league_code', 'season', name='uix_pool'),
-    )
+    def to_dict(self):
+        """Convertit l'objet Pool en dictionnaire prêt à être envoyé à l'API."""
+        return {
+            "pool_code": self.pool_code,
+            "league_code": self.league_code,
+            "season": self.season,
+            "division_code": self.division_code.value,
+            "league_name": self.league_name,
+            "pool_name": self.pool_name,
+            "division_name": self.division_name,
+            "gender": self.gender,
+            "raw_division_name": self.raw_division_name,
+            "active": self.active
+        }

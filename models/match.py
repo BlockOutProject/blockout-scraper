@@ -1,36 +1,42 @@
-from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship
-from enum import Enum as PyEnum
-from .base import Base
+from dataclasses import dataclass
+from enum import Enum
+from typing import Optional
+from datetime import datetime
 
-class MatchStatus(PyEnum):
-    UPCOMING = "upcoming"
-    COMPLETED = "completed"
+class MatchStatus(Enum):
+    UPCOMING = "UPCOMING"
+    COMPLETED = "COMPLETED"
 
-class Match(Base):
-    __tablename__ = 'matches'
+@dataclass
+class Match:
+    match_code: str
+    league_code: str
+    pool_id: int
+    team_id_a: int
+    team_id_b: int
+    match_date: datetime
+    status: MatchStatus
+    set: Optional[str] = None
+    score: Optional[str] = None
+    venue: Optional[str] = None
+    referee1: Optional[str] = None
+    referee2: Optional[str] = None
+    active: bool = True
 
-    id = Column(Integer, primary_key=True)
-    match_code = Column(String, nullable=False)
-    league_code = Column(String, nullable=False)
-    pool_id = Column(Integer, ForeignKey('pools.id'), nullable=False)
-    team_a_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
-    team_b_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
-    match_date = Column(DateTime, nullable=False)
-    set = Column(String)
-    score = Column(String)
-    status = Column(Enum(MatchStatus), nullable=False)
-    venue = Column(String)
-    referee1 = Column(String)
-    referee2 = Column(String)
-    last_update = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
-    active = Column(Boolean, default=True)
-
-    pool = relationship('Pool', back_populates='matches')
-    team_a = relationship('Team', foreign_keys=[team_a_id], back_populates='matches_home')
-    team_b = relationship('Team', foreign_keys=[team_b_id], back_populates='matches_away')
-
-    __table_args__ = (
-        UniqueConstraint('match_code', 'league_code', name='uix_match'),
-    )
+    def to_dict(self):
+        """Convertit l'objet Match en dictionnaire prêt à être envoyé à l'API."""
+        return {
+            "match_code": self.match_code,
+            "league_code": self.league_code,
+            "pool_id": self.pool_id,
+            "team_id_a": self.team_id_a,
+            "team_id_b": self.team_id_b,
+            "match_date": self.match_date.isoformat(),
+            "status": self.status.value,
+            "set": self.set,
+            "score": self.score,
+            "venue": self.venue,
+            "referee1": self.referee1,
+            "referee2": self.referee2,
+            "active": self.active
+        }
