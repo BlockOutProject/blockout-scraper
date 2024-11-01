@@ -3,10 +3,8 @@ import aiohttp
 from bs4 import BeautifulSoup
 import logging
 import re
-from api.pools_api import deactivate_pools
-from errors_handler import handle_errors
-from models.pool import PoolDivisionCode
-from services.pools_service import add_or_update_pool
+from models.pool import Pool, PoolDivisionCode
+from services.pools_service import add_or_update_pool, deactivate_pools
 from utils import (
     create_output_directory,
     delete_output_directory,
@@ -18,7 +16,6 @@ from utils import (
 
 logger = logging.getLogger('blockout')
 
-@handle_errors
 async def scrape_pools_from_league(http_session, league_code, league_name, league_page_url, folder):
     """
     Scrape les informations des pools d'une ligue régionale et télécharge les CSV correspondants.
@@ -47,51 +44,47 @@ async def scrape_pools_from_league(http_session, league_code, league_name, leagu
         pool_links = soup.select('ul#menu > li > ul > li > ul > li > a[href*="poule="]')
         tasks = []
 
-        async with aiohttp.ClientSession() as session:
-            for a_tag in pool_links:
-                    href = a_tag['href']
-                    pool_code_match = re.search(r'poule=([^&]+)', href)
-                    season_match = re.search(r'saison=([^&]+)', href)
-                    if not pool_code_match or not season_match:
-                        logger.warning(f"Informations manquantes dans l'URL: {href}")
-                        continue
-                    pool_code = pool_code_match.group(1)
-                    season = season_match.group(1)
-                    pool_name = a_tag.get_text(strip=True)
-                    raw_division_tag = a_tag.find_parent('ul').find_previous_sibling('a')
-                    raw_division_name = raw_division_tag.get_text(strip=True) if raw_division_tag else ""
-                    standardized = standardize_division_name(raw_division_name)
+        for a_tag in pool_links:
+            href = a_tag['href']
+            pool_code_match = re.search(r'poule=([^&]+)', href)
+            season_match = re.search(r'saison=([^&]+)', href)
+            if not pool_code_match or not season_match:
+                logger.warning(f"Informations manquantes dans l'URL: {href}")
+                continue
+            pool_code = pool_code_match.group(1)
+            raw_season = season_match.group(1)
+            pool_name = a_tag.get_text(strip=True)
+            raw_division_tag = a_tag.find_parent('ul').find_previous_sibling('a')
+            raw_division_name = raw_division_tag.get_text(strip=True) if raw_division_tag else ""
+            standardized = standardize_division_name(raw_division_name)
 
-                    scraped_pool_codes.add(pool_code)
+            scraped_pool_codes.add(pool_code)
 
-                    pool_data = {
-                        "pool_code": pool_code,
-                        "league_code": league_code,
-                        "season": parse_season(season),
-                        "league_name": league_name,
-                        "pool_name": pool_name,
-                        "division_code": PoolDivisionCode.REG.value,
-                        "division_name": standardized["division"],
-                        "gender": standardized["gender"],
-                        "raw_division_name": raw_division_name
-                    }
-                    
-                    new_pool = await add_or_update_pool(session, pool_data)
-                    if new_pool:
-                        pool_id = new_pool['id']
+            pool_data = {
+                "pool_code": pool_code,
+                "league_code": league_code,
+                "season": parse_season(raw_season),
+                "league_name": league_name,
+                "pool_name": pool_name,
+                "division_code": PoolDivisionCode.REG.value,
+                "division_name": standardized["division"],
+                "gender": standardized["gender"],
+                "raw_division_name": raw_division_name
+            }
+            pool = Pool(**pool_data)
 
-                        task = handle_csv_download_and_parse(
-                            http_session, pool_id, league_code, pool_code, season, folder
-                        )
-                        tasks.append(task)
+            new_pool = await add_or_update_pool(http_session, pool)
+            if new_pool:
+                task = handle_csv_download_and_parse(
+                    http_session, new_pool.id, new_pool.league_code, new_pool.pool_code, raw_season, folder
+                )
+                tasks.append(task)
 
         await asyncio.gather(*tasks)
-    async with aiohttp.ClientSession() as session:
-        await deactivate_pools(session, league_code, scraped_pool_codes)
+    await deactivate_pools(http_session, league_code, scraped_pool_codes)
     logger.debug(f"Pools pour la ligue {league_name} ajoutées à la base de données.")
 
 
-@handle_errors
 async def scrape_regional_pools(http_session):
     """
     Scrape tous les pools régionaux et leurs ligues associées.
@@ -136,4 +129,4 @@ async def scrape_regional_pools(http_session):
     await asyncio.gather(*tasks)
 
     logger.debug("Poules régionales ajoutées à la base de données.")
-    delete_output_directory(folder)
+    #delete_output_directory(folder)

@@ -2,10 +2,8 @@ import asyncio
 import aiohttp
 from bs4 import BeautifulSoup
 import logging
-from errors_handler import handle_errors
-from models.pool import PoolDivisionCode
+from models.pool import Pool, PoolDivisionCode
 from services.pools_service import add_or_update_pool, deactivate_pools
-from session_manager import get_db_session
 from utils import (
     create_output_directory,
     delete_output_directory,
@@ -19,7 +17,6 @@ from utils import (
 
 logger = logging.getLogger('blockout')
 
-@handle_errors
 async def scrape_national_pools(http_session):
     """
     Scrape les pools nationales et télécharge les CSV correspondants.
@@ -39,44 +36,43 @@ async def scrape_national_pools(http_session):
     soup = BeautifulSoup(html_content, 'html.parser')
     tasks = []
     scraped_pool_codes = set()
-    async with aiohttp.ClientSession() as session:
-        for a_tag in soup.find_all('a', href=lambda href: href and href.endswith('.htm')):
-            href = a_tag['href']
-            pool_name = a_tag.get_text(strip=True)
-            pool_code = href.split('_')[-1].replace('.htm', '').upper()
-            season = extract_season_from_url(href)
-            if not season:
-                logger.warning(f"Aucune saison trouvée pour l'URL: {href}")
-                continue
-            raw_division_name = extract_national_division(pool_name)
-            standardized = standardize_division_name(raw_division_name)
-            league_code = "ABCCS"
-            league_name = "NATIONAL"
-            
-            scraped_pool_codes.add(pool_code)
-            
-            pool_data = {
-                "pool_code": pool_code,
-                "league_code": league_code,
-                "season": parse_season(season),
-                "league_name": league_name,
-                "pool_name": pool_name,
-                "division_code": PoolDivisionCode.NAT.value,
-                "division_name": standardized["division"],
-                "gender": standardized["gender"],
-                "raw_division_name": raw_division_name
-            }
-            
-            new_pool = await add_or_update_pool(session, pool_data)
-            if new_pool:
-                pool_id = new_pool['id']
+    for a_tag in soup.find_all('a', href=lambda href: href and href.endswith('.htm')):
+        href = a_tag['href']
+        pool_name = a_tag.get_text(strip=True)
+        pool_code = href.split('_')[-1].replace('.htm', '').upper()
+        raw_season = extract_season_from_url(href)
+        if not raw_season:
+            logger.warning(f"Aucune saison trouvée pour l'URL: {href}")
+            continue
+        raw_division_name = extract_national_division(pool_name)
+        standardized = standardize_division_name(raw_division_name)
+        league_code = "ABCCS"
+        league_name = "NATIONAL"
+        
+        scraped_pool_codes.add(pool_code)
+        
+        pool_data = {
+            "pool_code": pool_code,
+            "league_code": league_code,
+            "season": parse_season(raw_season),
+            "league_name": league_name,
+            "pool_name": pool_name,
+            "division_code": PoolDivisionCode.NAT.value,
+            "division_name": standardized["division"],
+            "gender": standardized["gender"],
+            "raw_division_name": raw_division_name
+        }
+        pool = Pool(**pool_data)
+        
+        new_pool = await add_or_update_pool(http_session, pool)
+        if new_pool:
 
-                task = handle_csv_download_and_parse(
-                    http_session, pool_id, league_code, pool_code, season, folder
-                )
-                tasks.append(task)
-        #deactivate_pools(pool_session, league_code, scraped_pool_codes)
+            task = handle_csv_download_and_parse(
+                http_session, new_pool.id, new_pool.league_code, new_pool.pool_code, raw_season, folder
+            )
+            tasks.append(task)
 
     await asyncio.gather(*tasks)
+    await deactivate_pools(http_session, league_code, scraped_pool_codes)
     logger.debug("Poules nationales ajoutées à la base de données.")
-    #delete_output_directory(folder)
+    delete_output_directory(folder)

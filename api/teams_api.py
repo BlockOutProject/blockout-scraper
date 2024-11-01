@@ -1,67 +1,58 @@
+from dataclasses import asdict
+from typing import Optional
 import aiohttp
 import logging
-
 from api_handler import handle_api_response
+from models.team import Team
 
 logger = logging.getLogger('blockout')
 
 TEAM_API_URL = 'http://localhost:8082/api/teams'
 
-@handle_api_response
-async def get_team_by_pool_and_name(session: aiohttp.ClientSession, pool_id: int, team_name: str):
+@handle_api_response(response_type=Team)
+async def get_team_by_pool_and_name(session: aiohttp.ClientSession, pool_id: int, team_name: str) -> Optional[Team]:
     """
     Vérifie si une équipe existe déjà via l'API en utilisant pool_id et team_name.
-
-    Parameters:
-    - session: La session HTTP asynchrone.
-    - pool_id (int): L'ID de la pool.
-    - team_name (str): Le nom de l'équipe.
-
-    Returns:
-    - dict: L'équipe existante si trouvée, None sinon.
     """
     params = {'pool_id': pool_id, 'team_name': team_name}
     return await session.get(f"{TEAM_API_URL}/search", params=params)
 
-
-@handle_api_response
-async def create_team(session: aiohttp.ClientSession, team_data: dict):
+@handle_api_response(response_type=Team)
+async def create_team(session: aiohttp.ClientSession, team: Team) -> Optional[Team]:
     """
     Envoie une requête POST pour créer une nouvelle équipe.
-
-    Parameters:
-    - session: La session HTTP asynchrone.
-    - team_data (dict): Les données de l'équipe à créer.
-
-    Returns:
-    - dict: L'équipe créée si ajoutée avec succès.
     """
-    return await session.post(TEAM_API_URL, json=team_data)
+    team_dict = asdict(team)
 
+    response = await session.post(TEAM_API_URL, json=team_dict)
+    logger.info(f"Équipe {team.team_name} (club_id: {team.club_id}) créée avec succès.")
+    return response
 
-@handle_api_response
-async def update_team(session: aiohttp.ClientSession, team_id: int, team_data: dict, changes: list = []):
+@handle_api_response(response_type=Team)
+async def update_team(session: aiohttp.ClientSession, team: Team, changes: list[str] = []) -> Optional[Team]:
     """
     Envoie une requête PUT pour mettre à jour une équipe existante.
-
-    Parameters:
-    - session: La session HTTP asynchrone.
-    - team_id (int): L'ID de l'équipe à mettre à jour.
-    - team_data (dict): Les données mises à jour de l'équipe.
-
-    Returns:
-    - dict: L'équipe mise à jour si elle est modifiée avec succès.
     """
-    return await session.put(f"{TEAM_API_URL}/{team_id}", json=team_data)
+    team_dict = asdict(team)
 
-@handle_api_response
-async def get_active_teams_by_pool_id(session, pool_id):
-    """Récupère les équipes actives pour une pool donnée."""
+    response = await session.put(f"{TEAM_API_URL}/{team.id}", json=team_dict)
+    
+    if changes:
+        logger.info(f"Équipe {team.team_name} (ID: {team.id}) mise à jour avec les changements suivants: {', '.join(changes)}")
+    
+    return response
+
+@handle_api_response(response_type=list[Team])
+async def get_active_teams_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[list[Team]]:
+    """
+    Récupère les équipes actives pour une pool donnée.
+    """
     return await session.get(f"{TEAM_API_URL}/active?pool_id={pool_id}")
 
-
-@handle_api_response
-async def deactivate_team(session, team):
-    """Désactive une équipe en mettant à jour son statut 'active' à False."""
-    team['active'] = False
-    return await session.put(f"{TEAM_API_URL}/{team['id']}", json=team)
+@handle_api_response(response_type=None)
+async def deactivate_team(session: aiohttp.ClientSession, team_id: int) -> None:
+    """
+    Désactive une équipe en mettant à jour son statut 'active' à False.
+    """
+    await session.put(f"{TEAM_API_URL}/{team_id}/deactivate")
+    logger.info(f"Équipe {team_id} désactivée avec succès.")

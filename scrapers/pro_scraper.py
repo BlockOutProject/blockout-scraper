@@ -1,10 +1,11 @@
 # pro_scraper.py
 import asyncio
+from dataclasses import asdict
 import logging
 
 import aiohttp
-from errors_handler import handle_errors
-from models.pool import PoolDivisionCode
+from models.pool import Pool, PoolDivisionCode
+from scrapers.lnv_scraper import add_match_live_code, parse_and_update_matches
 from services.pools_service import add_or_update_pool
 from utils import (
     create_output_directory,
@@ -15,7 +16,6 @@ from utils import (
 
 logger = logging.getLogger('blockout')
 
-@handle_errors
 async def scrape_pro_pools(http_session):
     """
     Scrape les pools professionnelles et télécharge les CSV correspondants.
@@ -24,44 +24,44 @@ async def scrape_pro_pools(http_session):
     - http_session: La session aiohttp.
     """
     folder = create_output_directory("Pro")
-    season = "2024/2025"  # Mettez à jour la saison si nécessaire
+    raw_season = "2024/2025"  # Mettez à jour la saison si nécessaire
     league_code = "AALNV"
     league_name = "PRO"
 
-    pools = [
-        {"code": "MSL", "pool_name": "Marmara SpikeLigue", "division_name": "Marmara SpikeLigue", "gender": "M"},
-        {"code": "LBM", "pool_name": "Ligue B Masculine", "division_name": "Ligue B Masculine", "gender": "M"},
-        {"code": "LAF", "pool_name": "Saforelle Power 6", "division_name": "Saforelle Power 6", "gender": "F"},
+    pools_json = [
+        {"code": "MSL", "pool_name": "Marmara SpikeLigue", "division_name": "Marmara SpikeLigue", "gender": "M", "lnv_url": "http://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=115", "lnv_xml_url": "https://www.lnv.fr/xml/calendrier-LAM.xml"},
+        {"code": "LBM", "pool_name": "Ligue B Masculine", "division_name": "Ligue B Masculine", "gender": "M", "lnv_url": "http://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=116", "lnv_xml_url": "https://www.lnv.fr/xml/calendrier-LBM.xml"},
+        {"code": "LAF", "pool_name": "Saforelle Power 6", "division_name": "Saforelle Power 6", "gender": "F", "lnv_url": "http://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=113", "lnv_xml_url": "https://www.lnv.fr/xml/calendrier-LAF.xml"},
     ]
 
     tasks = []
 
-    async with aiohttp.ClientSession() as session:
-        logger.debug("Début du scraping des poules professionnelles.")
-        
-        for pool in pools:
-            pool_data = {
-                "pool_code": pool['code'],
-                "league_code": league_code,
-                "season": parse_season(season),
-                "league_name": league_name,
-                "pool_name": pool['pool_name'],
-                "division_code": PoolDivisionCode.PRO.value,
-                "division_name": pool['division_name'],
-                "gender": pool['gender']
-            }
+    logger.debug("Début du scraping des poules professionnelles.")
+    
+    for pool_json in pools_json:
+        pool_data = {
+            "pool_code": pool_json['code'],
+            "league_code": league_code,
+            "season": parse_season(raw_season),
+            "league_name": league_name,
+            "pool_name": pool_json['pool_name'],
+            "division_code": PoolDivisionCode.PRO.value,
+            "division_name": pool_json['division_name'],
+            "gender": pool_json['gender']
+        }
+        pool = Pool(**pool_data)
 
-            new_pool = await add_or_update_pool(session, pool_data)
-            if new_pool:
-                pool_id = new_pool['id']
+        new_pool = await add_or_update_pool(http_session, pool)
+        if new_pool:
 
-                # Gestion du téléchargement et parsing du CSV
-                task = handle_csv_download_and_parse(
-                    http_session, pool_id, league_code, pool['code'], season, folder
-                )
-                tasks.append(task)
+            async def execute_task_chain(pool_id, pool_code, season, gender, folder, lnv_url, lnv_xml_url):
+                await handle_csv_download_and_parse(http_session, pool_id, league_code, pool_code, season, folder)
+                await parse_and_update_matches(http_session, lnv_xml_url, pool_id)
+                await add_match_live_code(http_session, lnv_url, pool_id, gender)
 
-        await asyncio.gather(*tasks)
+            tasks.append(execute_task_chain(new_pool.id, new_pool.pool_code, raw_season, new_pool.gender, folder, pool_json['lnv_url'], pool_json['lnv_xml_url']))
+
+    await asyncio.gather(*tasks)
 
     logger.debug("Poules professionnelles ajoutées à la base de données via API.")
     delete_output_directory(folder)

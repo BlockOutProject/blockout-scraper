@@ -1,7 +1,6 @@
 import aiohttp
 import asyncio
 import logging
-from errors_handler import handle_errors
 
 logger = logging.getLogger('blockout')
 
@@ -10,7 +9,6 @@ RETRY_DELAY = 2       # Délai en secondes entre chaque tentative en cas d'éche
 TIMEOUT = aiohttp.ClientTimeout(total=30)  # Timeout de 30 secondes pour chaque requête
 SEM = asyncio.Semaphore(20)  # Limiter à 20 téléchargements simultanés
 
-@handle_errors
 async def download_csv(
     session: aiohttp.ClientSession,
     league_code: str,
