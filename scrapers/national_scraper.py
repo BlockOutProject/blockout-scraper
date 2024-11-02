@@ -1,5 +1,4 @@
 import asyncio
-import aiohttp
 from bs4 import BeautifulSoup
 import logging
 from models.pool import Pool, PoolDivisionCode

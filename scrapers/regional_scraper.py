@@ -129,4 +129,4 @@ async def scrape_regional_pools(http_session):
     await asyncio.gather(*tasks)
 
     logger.debug("Poules régionales ajoutées à la base de données.")
-    #delete_output_directory(folder)
+    delete_output_directory(folder)

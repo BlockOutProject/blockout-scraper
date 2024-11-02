@@ -55,7 +55,7 @@ async def main():
             
             finally:
                 accumulating_handler.clear_logs()
-                await log_started_matches()
+                #await log_started_matches()
 
 def schedule_scraper():
     """

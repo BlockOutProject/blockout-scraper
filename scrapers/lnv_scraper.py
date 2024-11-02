@@ -7,7 +7,7 @@ from api.matchs_api import get_match_by_pool_teams_date, update_match, get_activ
 from api.teams_api import get_team_by_pool_and_name
 from models.match import Match
 from utils import fetch, get_full_team_name
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, Tuple
 import xml.etree.ElementTree as ET
 
 logger = logging.getLogger('blockout')
@@ -26,7 +26,7 @@ async def parse_and_update_matches(http_session, xml_url, pool_id):
     for match in root.findall(".//Match"):
         await process_xml_match(match, existing_matches, http_session)
 
-async def process_xml_match(match, existing_matches : Optional[List[Match]], http_session):
+async def process_xml_match(match, existing_matches : Optional[list[Match]], http_session):
     code_match = match.find("CodeMatch").text
     match_date = match.find("Date").text + " " + match.find("Heure").text
     set = match.find("Score").text # Set fait reference au champ csv, attention à la confusion avec Score
