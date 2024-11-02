@@ -1,0 +1,399 @@
+{
+    "teams": [
+        {
+            "full": "Montpellier Herault SCV",
+            "short": "MHSC",
+            "aliases": [
+                "Montpellier VB",
+                "Montpellier Herault SCV",
+                "Montpellier",
+                "Montpellier Herault SC",
+                "Montpellier Herault Sporting Club Volley"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Saems Tourcoing VB Lille Metropole",
+            "short": "TLM",
+            "aliases": [
+                "Tourcoing LM",
+                "TLM",
+                "Tourcoing",
+                "Tourcoing Lille Metropole",
+                "Saems Tourcoing VB Lille Metropole",
+                "Tourcoing VB Lille Metropole"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Alterna Stade Poitevin VB",
+            "short": "ASPVB",
+            "aliases": [
+                "Poitiers VB",
+                "POI",
+                "Poitiers",
+                "Stade Poitevin Poitiers"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "AS Cannes Volley-Ball",
+            "short": "Cannes",
+            "aliases": [
+                "AS Cannes",
+                "CAN",
+                "Cannes",
+                "As Cannes Volley",
+                "AS Cannes Volley-Ball"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Arago De Sete",
+            "short": "Sète",
+            "aliases": [
+                "Arago Sète",
+                "Sète",
+                "Arago de Sete"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Chaumont VB 52 Haute-Marne",
+            "short": "CVB52",
+            "aliases": [
+                "Chaumont VB",
+                "CVB52",
+                "Chaumont",
+                "Chaumont Volley 52",
+                "Chaumont VB 52 Haute-Marne"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Nice Volley-Ball",
+            "short": "Nice",
+            "aliases": [
+                "Nice VB",
+                "Nice",
+                "Nice Cote d'Azur Volley",
+                "Nice Volley-Ball"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "St Nazaire VB Atlantique",
+            "short": "SNVBA",
+            "aliases": [
+                "St-Nazaire VB",
+                "SNVBA",
+                "St-Nazaire",
+                "Saint Nazaire",
+                "St Nazaire VB Atlantique"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Spacer's Toulouse Volley-Ball",
+            "short": "Toulouse",
+            "aliases": [
+                "Toulouse VB",
+                "Toulouse",
+                "Spacer's Toulouse Volley"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "PARIS Volley",
+            "short": "Paris",
+            "aliases": [
+                "Paris",
+                "Paris Volley"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "TOURS Volley-Ball",
+            "short": "TVB",
+            "aliases": [
+                "Tours VB",
+                "TVB",
+                "Tours",
+                "Tours Volley Ball"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Narbonne Volley",
+            "short": "Narbonne",
+            "aliases": [
+                "Narbonne VB",
+                "NAR",
+                "Narbonne",
+                "Narbonne Volley"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Plessis-Robinson Volley-Ball",
+            "short": "PRVB",
+            "aliases": [
+                "Plessis-Robinson Volley-Ball",
+                "PRVB",
+                "Plessis-Robinson",
+                "Plessis Robinson VB"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Neptunes de Nantes",
+            "short": "Neptunes",
+            "aliases": [
+                "Neptunes de Nantes",
+                "Nantes VB",
+                "Nantes",
+                "Neptunes"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Volley Mulhouse Alsace",
+            "short": "Mulhouse",
+            "aliases": [
+                "Mulhouse Alsace",
+                "Mulhouse VB",
+                "VMA",
+                "Mulhouse"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Pays d'Aix Venelles V.B.",
+            "short": "Venelles",
+            "aliases": [
+                "Pays d'Aix Venelles V.B.",
+                "Pays d'Aix Venelles",
+                "Venelles",
+                "PAVVB"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Levallois Paris SC",
+            "short": "Paris St-Cloud",
+            "aliases": [
+                "Levallois Paris Saint-Cloud",
+                "Levallois Paris SC",
+                "Levallois Paris",
+                "Paris St-Cloud",
+                "LPSC"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Vandoeuvre-Nancy Volley-Ball",
+            "short": "Vandoeuvre Nancy",
+            "aliases": [
+                "Vandoeuvre-Nancy VB",
+                "VNVB",
+                "Vandoeuvre Nancy",
+                "Vandoeuvre-Nancy Volley-Ball"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Terville Florange Olympique Club",
+            "short": "TFOC",
+            "aliases": [
+                "Terville Florange Olympique Club",
+                "Terville Florange",
+                "TFOC"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Bordeaux Merignac Volley",
+            "short": "Burdies",
+            "aliases": [
+                "Bordeaux Merignac VB",
+                "Bordeaux Merignac Volley",
+                "Bordeaux VB",
+                "Bordeaux Mérignac",
+                "Burdies"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Beziers Volley",
+            "short": "Béziers",
+            "aliases": [
+                "Beziers Volley-Ball",
+                "Beziers Volley",
+                "Béziers VB",
+                "Béziers"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "VC Marcq-en-Baroeul Lille Metropole",
+            "short": "Marcq-en-Baroeul",
+            "aliases": [
+                "VC Marcq-en-Baroeul Lille Metropole",
+                "VC Marcq-en-Baroeul",
+                "Marcq-en-Baroeul",
+                "Marcq en Baroeul"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Quimper Volley 29",
+            "short": "Quimper",
+            "aliases": [
+                "Quimper VB",
+                "Quimper Volley 29",
+                "QV 29",
+                "Quimper"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "VBC Chamalieres",
+            "short": "Chamalieres",
+            "aliases": [
+                "Chamalières VB",
+                "VBC Chamalieres",
+                "Chamalieres"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Racing Club de Cannes",
+            "short": "RC Cannes",
+            "aliases": [
+                "Racing Club de Cannes",
+                "RC Cannes",
+                "Cannes"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "Volero Le Cannet",
+            "short": "Le Cannet",
+            "aliases": [
+                "Volero Le Cannet",
+                "Le Cannet"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "France Avenir 2024",
+            "short": "France Avenir",
+            "aliases": [
+                "France Avenir 2024",
+                "FA2024",
+                "France Avenir"
+            ],
+            "gender": "F"
+        },
+        {
+            "full": "France Avenir 2024",
+            "short": "France Avenir",
+            "aliases": [
+                "France Avenir 2024",
+                "FA2024",
+                "France Avenir"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Royan Atlantique Volley-Ball",
+            "short": "Royan",
+            "aliases": [
+                "Royan Atlantique Volley-Ball",
+                "RAVB",
+                "Royan"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "AS Illacaise VB",
+            "short": "Illac",
+            "aliases": [
+                "Saint-Jean d'Illac",
+                "AS Illacaise VB",
+                "Illac"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Martigues Volley-Ball",
+            "short": "Martigues",
+            "aliases": [
+                "Martigues Volley-Ball",
+                "MVB",
+                "Martigues"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Saint-Quentin Volley",
+            "short": "St-Quentin",
+            "aliases": [
+                "Saint-Quentin Volley",
+                "SQV",
+                "Saint-Quentin",
+                "St-Quentin"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Gazelec F.C. Ajaccio",
+            "short": "Ajaccio",
+            "aliases": [
+                "Gazelec F.C. Ajaccio",
+                "GFCA VB",
+                "Ajaccio"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Grand Nancy Volley-Ball",
+            "short": "Nancy",
+            "aliases": [
+                "Grand Nancy Volley-Ball",
+                "Grand Nancy",
+                "GNVB SASP",
+                "Nancy"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Cambrai Volley",
+            "short": "Cambrai",
+            "aliases": [
+                "Cambrai Volley",
+                "Cambrai"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Reims Volley 51",
+            "short": "Reims",
+            "aliases": [
+                "Reims Volley 51",
+                "Reims"
+            ],
+            "gender": "M"
+        },
+        {
+            "full": "Frejus Var Volley",
+            "short": "Fréjus",
+            "aliases": [
+                "Fréjus Var Volley",
+                "Frejus Var Volley",
+                "Fréjus"
+            ],
+            "gender": "M"
+        }
+    ]
+}

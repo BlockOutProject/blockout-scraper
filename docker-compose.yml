@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: blockout_scraper
+      POSTGRES_PASSWORD: blockout_scraper
+      POSTGRES_DB: blockout_scraper
+    ports:
+      - 5435:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+  
+  # flyway:
+  #   image: flyway/flyway:latest
+  #   container_name: flyway
+  #   command: -url=jdbc:postgresql://postgres:5432/myvolley -user=admin -password=password -locations=filesystem:/flyway/sql migrate
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./flyway:/flyway/sql
+
+volumes:
+  postgres-data:

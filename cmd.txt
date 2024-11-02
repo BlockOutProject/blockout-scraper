@@ -3,3 +3,12 @@ pip : /Users/legel/Documents/Python/BlockOutVenv/bin/pip
 venv : source /Users/legel/Documents/Python/BlockOutVenv/bin/activate
 
 pip install -r requirements.txt
+
+LAF : https://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=113
+
+MSL : https://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=115
+
+LBM : https://lnv-web.dataproject.com/CompetitionMatches.aspx?ID=116
+
+
+Footer div class : RPL_Row_Content_Teams

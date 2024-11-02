@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 import re
@@ -6,13 +7,31 @@ from datetime import datetime, timezone
 import logging
 import shutil
 from typing import Iterator, Optional
+import unicodedata
+
+import aiohttp
 from downloader import download_csv
-from errors_handler import handle_errors
-from services.teams_service import add_or_update_team, desactivate_teams
+from models.match import Match, MatchStatus
+from models.team import Team
+from services.matchs_service import add_or_update_match, deactivate_matches
+from services.teams_service import add_or_update_team, deactivate_teams
 from session_manager import get_db_session
-from services.matchs_service import add_or_update_match, desactivate_matches
 
 logger = logging.getLogger('blockout')
+
+try:
+    with open('config/mapping/standardized_divisions.json', 'r', encoding='utf-8') as f:
+        standardized_divisions = json.load(f)
+except Exception as e:
+    logger.error(f"Erreur lors du chargement de 'standardized_divisions.json': {e}")
+    standardized_divisions = {}
+    
+try:
+    with open('config/mapping/team_aliases.json', 'r', encoding='utf-8') as f:
+        team_aliases = json.load(f)
+except Exception as e:
+    logger.error(f"Erreur lors du chargement de 'team_aliases': {e}")
+    team_aliases = {}
 
 def create_output_directory(league: str) -> str:
     """
@@ -30,13 +49,6 @@ def create_output_directory(league: str) -> str:
     os.makedirs(folder_name, exist_ok=True)
     logger.debug(f"Répertoire de sortie créé: {folder_name}")
     return folder_name
-
-try:
-    with open('standardized_divisions.json', 'r', encoding='utf-8') as f:
-        standardized_divisions = json.load(f)
-except Exception as e:
-    logger.error(f"Erreur lors du chargement de 'standardized_divisions.json': {e}")
-    standardized_divisions = {}
 
 def standardize_division_name(division_name: str) -> dict:
     """
@@ -59,25 +71,33 @@ def standardize_division_name(division_name: str) -> dict:
 
 def parse_season(season_str: str) -> int:
     """
-    Convertit une chaîne de saison 'YYYY/YYYY' en un entier 'YYYY'.
+    Convertit une chaîne de saison 'YYYY/YYYY' en un entier combiné 'YYYYYY' 
+    en prenant les deux derniers chiffres de chaque année.
 
     Parameters:
     - season_str (str): La chaîne de la saison au format 'YYYY/YYYY'.
 
     Returns:
-    - int: L'année de début de la saison.
+    - int: La combinaison des deux dernières années (ex: 2024/2025 -> 2425).
 
     Raises:
     - ValueError: Si le format de la saison est invalide.
     """
     try:
-        start_year = int(season_str.split('/')[0])
-        logger.debug(f"Saison parsée: {season_str} -> {start_year}")
-        return start_year
+        # Séparer les années et prendre les deux derniers chiffres de chaque année
+        start_year, end_year = season_str.split('/')
+        start_year_last_two = start_year[-2:]  # Derniers chiffres de l'année de début
+        end_year_last_two = end_year[-2:]  # Derniers chiffres de l'année de fin
+
+        # Concaténer les deux derniers chiffres des deux années et convertir en entier
+        combined_years = int(start_year_last_two + end_year_last_two)
+        
+        logger.debug(f"Saison parsée: {season_str} -> {combined_years}")
+        return combined_years
     except Exception as e:
         logger.error(f"Erreur lors du parsing de la saison '{season_str}': {e}")
         raise ValueError(f"Erreur lors du traitement de la saison: {e}")
-
+    
 def extract_season_from_url(url: str) -> Optional[str]:
     """
     Extrait la saison à partir de l'URL.
@@ -126,19 +146,19 @@ def parse_csv(file_path: str) -> Iterator[dict]:
         reader = csv.DictReader(file, delimiter=';')
         for row in reader:
             yield {
-                'league_code': row.get('Entité'),
-                'match_code': row.get('Match'),
-                'club_a_id': row.get('EQA_no'),
-                'club_b_id': row.get('EQB_no'),
-                'team_a_name': row.get('EQA_nom'),
-                'team_b_name': row.get('EQB_nom'),
-                'match_date': row.get('Date'),
-                'match_time': row.get('Heure'),
-                'set': row.get('Set'),
-                'score': row.get('Score'),
-                'venue': row.get('Salle'),
-                'referee1': row.get('Arb1'),
-                'referee2': row.get('Arb2'),
+                'league_code': row['Entité'],
+                'match_code': row['Match'],
+                'club_a_id': row['EQA_no'],
+                'club_b_id': row['EQB_no'],
+                'team_a_name': row['EQA_nom'],
+                'team_b_name': row['EQB_nom'],
+                'match_date': row['Date'],
+                'match_time': row['Heure'],
+                'set': row['Set'].strip() or None,
+                'score': row['Score'] or None,
+                'venue': row['Salle'] or None,
+                'referee1': row['Arb1'] or None,
+                'referee2': row['Arb2'] or None,
             }
 
 def parse_date(date_str: str, time_str: str) -> Optional[datetime]:
@@ -160,7 +180,6 @@ def parse_date(date_str: str, time_str: str) -> Optional[datetime]:
         logger.warning(f"Erreur lors du parsing de la date '{date_str} {time_str}': {e}")
         return None
 
-@handle_errors
 async def fetch(http_session, url: str) -> Optional[str]:
     """
     Récupère le contenu d'une URL de manière asynchrone.
@@ -173,7 +192,7 @@ async def fetch(http_session, url: str) -> Optional[str]:
     - Optional[str]: Le contenu de la réponse, ou None en cas d'erreur.
     """
     try:
-        async with http_session.get(url) as response:
+        async with http_session.get(url, ssl=False) as response:
             response.raise_for_status()
             content = await response.content.read()
             logger.debug(f"Contenu récupéré depuis l'URL: {url}")
@@ -182,7 +201,6 @@ async def fetch(http_session, url: str) -> Optional[str]:
         logger.error(f"Erreur lors de la récupération de l'URL '{url}': {e}")
         return None
 
-@handle_errors
 async def handle_csv_download_and_parse(
     http_session,
     pool_id: int,
@@ -204,72 +222,82 @@ async def handle_csv_download_and_parse(
     """
     logger.debug(f"Téléchargement du CSV pour Pool ID: {pool_id}, League Code: {league_code}, Pool Code: {pool_code}")
     csv_path = await download_csv(http_session, league_code, pool_code, season, folder)
+
     if csv_path:
         logger.debug(f"CSV téléchargé avec succès: {csv_path}")
-        await parse_and_add_matches_from_csv(pool_id, csv_path)
+        await parse_and_add_matches_from_csv(http_session, pool_id, csv_path)
     else:
         logger.error(f"Échec du téléchargement du CSV pour Pool Code: {pool_code}")
 
-@handle_errors
-async def parse_and_add_matches_from_csv(pool_id: int, csv_path: str) -> None:
+async def parse_and_add_matches_from_csv(http_session, pool_id: int, csv_path: str) -> None:
     """
-    Parse le fichier CSV et ajoute les matchs à la base de données.
+    Parse le fichier CSV et ajoute les matchs et les équipes via des appels API REST.
 
     Parameters:
+    - http_session: La session aiohttp.
     - pool_id (int): L'ID de la pool.
     - csv_path (str): Le chemin du fichier CSV.
     """
     logger.debug(f"Parsing et ajout des matchs depuis le CSV: {csv_path}")
     scraped_team_names = set()
     scraped_match_codes = set()
-    with get_db_session() as session:
-        for data in parse_csv(csv_path):
-            club_a_id = data['club_a_id']
-            club_b_id = data['club_b_id']
-            if club_a_id and club_b_id:
-                match_datetime = parse_date(data['match_date'], data['match_time'])
-                if not match_datetime:
-                    logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
-                    continue 
 
-                team_a = add_or_update_team(
-                    session,
-                    pool_id=pool_id,
-                    club_id=data['club_a_id'],
-                    team_name=data['team_a_name']
-                )
+    for data in parse_csv(csv_path):
+        club_a_id = data['club_a_id']
+        club_b_id = data['club_b_id']
+        if club_a_id and club_b_id:
 
-                team_b = add_or_update_team(
-                    session,
-                    pool_id=pool_id,
-                    club_id=data['club_b_id'],
-                    team_name=data['team_b_name']
-                )
+            match_datetime = parse_date(data['match_date'], data['match_time'])
+            if not match_datetime:
+                logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
+                continue 
+
+            # Ajouter ou mettre à jour les équipes via API
+            team_a_data = {
+                "team_name": data['team_a_name'],
+                "club_id": club_a_id,
+                "pool_id": pool_id
+            }
+            team_b_data = {
+                "team_name": data['team_b_name'],
+                "club_id": club_b_id,
+                "pool_id": pool_id
+            }
+            team_a = Team(**team_a_data)
+            team_b = Team(**team_b_data)
+
+            new_team_a = await add_or_update_team(http_session, team_a)
+            new_team_b = await add_or_update_team(http_session, team_b)
+
+            if new_team_a and new_team_b:
+                scraped_team_names.add(new_team_a.team_name)
+                scraped_team_names.add(new_team_b.team_name)
+
+                # Ajouter ou mettre à jour le match via API
+                match_data = {
+                    "match_code": data['match_code'],
+                    "league_code": data['league_code'],
+                    "pool_id": pool_id,
+                    "team_id_a": new_team_a.id,
+                    "team_id_b": new_team_b.id,
+                    "match_date": match_datetime,
+                    "set": None if not data['set'] else data['set'].replace('/', '-'),      
+                    "score": None if not data['score'] else data['score'],
+                    "status": MatchStatus.COMPLETED.value if data['set'] and data['score'] else MatchStatus.UPCOMING.value,
+                    "venue": None if not data['venue'] else data['venue'],
+                    "referee1": None if not data['referee1'] else data['referee1'],
+                    "referee2": None if not data['referee2'] else data['referee2']
+                }
+                match = Match(**match_data)
+                new_match = await add_or_update_match(http_session, match)
+                scraped_match_codes.add(new_match.match_code)
                 
-                scraped_team_names.add(team_a.team_name)
-                scraped_team_names.add(team_b.team_name)
-
-                match = add_or_update_match(
-                    session,
-                    league_code=data['league_code'],
-                    match_code=data['match_code'],
-                    pool_id=pool_id,
-                    team_a_id=team_a.id,
-                    team_b_id=team_b.id,
-                    match_date=match_datetime,
-                    set=data['set'],
-                    score=data['score'],
-                    venue=data['venue'],
-                    referee1=data['referee1'],
-                    referee2=data['referee2']
-                )
-                
-                scraped_match_codes.add(match.match_code)
-                
-        desactivate_teams(session, pool_id, scraped_team_names)
-        desactivate_matches(session, pool_id, scraped_match_codes)
-        logger.debug(f"Matchs ajoutés depuis le CSV: {csv_path}")
-
+    await asyncio.gather(
+        deactivate_teams(http_session, pool_id, scraped_team_names),
+        deactivate_matches(http_session, pool_id, scraped_match_codes)
+    )
+    logger.debug(f"Terminé l'ajout des matchs depuis le CSV: {csv_path}")
+        
 def delete_output_directory(folder_path: str) -> None:
     """
     Supprime un répertoire de sortie et tout son contenu.
@@ -286,3 +314,55 @@ def delete_output_directory(folder_path: str) -> None:
     except Exception as e:
         logger.error(f"Erreur lors de la suppression du répertoire : {str(e)}")
         raise
+    
+def is_name_in_aliases(name: str) -> bool:
+    """
+    Vérifie si un nom d'équipe est présent dans les alias définis pour les équipes.
+
+    Parameters:
+    - name (str): Le nom de l'équipe à vérifier.
+
+    Returns:
+    - bool: True si le nom est trouvé dans les alias de l'une des équipes, sinon False.
+    """
+    try:
+        for team in team_aliases['teams']:
+            all_aliases = [team['full']] + team['aliases']
+            if name in all_aliases:
+                return True
+        return False
+    except KeyError as e:
+        logger.error(f"Clé manquante dans teams_data : {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Erreur inattendue dans is_name_in_aliases : {str(e)}")
+        raise
+    
+def remove_accents(text: str) -> str:
+    """Supprime les accents d'un texte."""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn'
+    )
+
+def get_full_team_name(name: str, gender: str) -> Optional[str]:
+    """
+    Récupère le nom complet de l'équipe correspondant au nom donné en tenant compte du genre.
+
+    Parameters:
+    - name (str): Le nom de l'équipe à rechercher.
+    - gender (str): Le genre de l'équipe à rechercher ('F' pour féminin, 'M' pour masculin).
+
+    Returns:
+    - str: Le nom complet de l'équipe si trouvé et correspond au genre, sinon None.
+    """
+    try:
+        name_normalized = remove_accents(name).upper()  # Nom recherché sans accents et en majuscules
+        for team in team_aliases['teams']:
+            if team['gender'] == gender:  # Vérifie le genre
+                aliases_normalized = [remove_accents(alias).upper() for alias in team['aliases']]  # Alias sans accents et en majuscules
+                if name_normalized in aliases_normalized:
+                    return team['full']
+    except Exception as e:
+        logger.error(f"Erreur lors de la recherche du nom d'équipe : {e}")
+    
+    return None
