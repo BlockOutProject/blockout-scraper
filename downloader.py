@@ -13,7 +13,7 @@ async def download_csv(
     session: aiohttp.ClientSession,
     league_code: str,
     pool_code: str,
-    season: str,
+    raw_season: str,
     folder: str
 ) -> str:
     """
@@ -31,7 +31,7 @@ async def download_csv(
     """
     download_url = "http://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export.php"
     data = {
-        'cal_saison': season,
+        'cal_saison': raw_season,
         'cal_codent': league_code,
         'cal_codpoule': pool_code,
     }

@@ -7,4 +7,3 @@ pyyaml
 APScheduler
 psycopg2-binary
 sseclient
-signalr-client

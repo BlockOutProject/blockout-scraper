@@ -1,78 +1,92 @@
-from signalr import Connection
 import requests
-from urllib.parse import quote
+import json
+import sseclient
+import time
+import threading
 
-# URL du service SignalR
-url = "https://dataprojectservicesignalr.azurewebsites.net/signalr"
-
-# Étape 1 : Effectuer la négociation pour obtenir le ConnectionToken
-def negotiate():
-    negotiate_url = f"{url}/negotiate"
-    params = {
-        'clientProtocol': '1.5',
-        'connectionData': '[{"name":"signalrlivehubfederations"}]',
-        '_': 'timestamp'
-    }
-    headers = {
-        "Accept": "application/json",
-        "Origin": "https://lnv-web.dataproject.com",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        "Cookie": "ARRAffinitySameSite=your_cookie_value_here",
-        "Authorization": "Bearer your_token_here"  # Remplacez par le token si nécessaire
-    }
-    response = requests.get(negotiate_url, params=params, headers=headers)
-    response.raise_for_status()  # Vérifie que la réponse est OK
-    return response.json()
-
-# Étape 2 : Obtenir et encoder le token de connexion
-negotiation_data = negotiate()
-raw_token = negotiation_data['ConnectionToken']
-encoded_token = quote(raw_token, safe="")
-
-# Créer une session pour la connexion persistante
-session = requests.Session()
-session.headers.update({
-    "Accept": "application/json",
+# Étape 1 : Négociation pour obtenir le ConnectionToken
+negotiate_url = "https://dataprojectservicesignalr.azurewebsites.net/signalr/negotiate"
+negotiate_params = {
+    "clientProtocol": "1.5",
+    "connectionData": '[{"name":"signalrlivehubfederations"}]',
+    "_": str(int(time.time() * 1000))
+}
+headers = {
     "Origin": "https://lnv-web.dataproject.com",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-    "Cookie": "ARRAffinitySameSite=your_cookie_value_here",
-    "Authorization": "Bearer your_token_here"
-})
+}
 
-# Créer la connexion avec le token encodé
-connection_url = f"{url}/connect?transport=serverSentEvents&clientProtocol=1.5&connectionToken={encoded_token}&connectionData=[{{\"name\":\"signalrlivehubfederations\"}}]&tid=3"
-connection = Connection(connection_url, session)
+# Effectuer la requête de négociation
+response = requests.get(negotiate_url, params=negotiate_params, headers=headers)
+negotiate_response = response.json()
+connection_token = negotiate_response["ConnectionToken"]
+connection_id = negotiate_response["ConnectionId"]
 
-# Enregistrer le hub
-hub = connection.register_hub('signalrlivehubfederations')
+print("ConnectionToken :", connection_token)
+print("ConnectionId :", connection_id)
 
-# Callback générique pour capturer tous les messages
-def on_message_received(message):
-    print("Message reçu :", message)
+# Fonction pour écouter les événements SSE
+def listen_to_events():
+    # Étape 2 : Se connecter au flux SSE
+    connect_url = "https://dataprojectservicesignalr.azurewebsites.net/signalr/connect"
+    connect_params = {
+        "transport": "serverSentEvents",
+        "clientProtocol": "1.5",
+        "connectionToken": connection_token,
+        "connectionData": '[{"name":"signalrlivehubfederations"}]',
+        "tid": 2
+    }
 
-# Définir les callbacks spécifiques pour les événements
-def on_update_match_set_data_es(data):
-    print("Données ES reçues :", data)
+    connect_response = requests.get(connect_url, params=connect_params, headers=headers, stream=True)
+    if connect_response.status_code != 200:
+        print("Erreur lors de la connexion :", connect_response.status_code)
+        return
 
-def on_update_match_set_data_dv(data):
-    print("Données DV reçues :", data)
+    client = sseclient.SSEClient(connect_response)
+    for event in client.events():
+        print("Message reçu :", event.data)
+        # Traitez l'événement selon vos besoins
 
-# Associer les événements à leurs callbacks
-hub.client.on("updateMatchSetData_ES", on_update_match_set_data_es)
-hub.client.on("updateMatchSetData_DV", on_update_match_set_data_dv)
+# Démarrer l'écoute des événements dans un thread séparé
+listener_thread = threading.Thread(target=listen_to_events)
+listener_thread.start()
 
-# Associer le callback générique pour déboguer tous les messages reçus
-connection.received += on_message_received
+# Attendre un peu pour s'assurer que la connexion est établie
+time.sleep(2)
 
-# Démarrer la connexion
-connection.start()
+# Étape 3 : Envoyer la requête 'start'
+start_url = "https://dataprojectservicesignalr.azurewebsites.net/signalr/start"
+start_params = {
+    "transport": "serverSentEvents",
+    "clientProtocol": "1.5",
+    "connectionToken": connection_token,
+    "connectionData": '[{"name":"signalrlivehubfederations"}]',
+    "_": str(int(time.time() * 1000))
+}
 
-# Envoyer la commande spécifique `getLiveScoreListData_From_ES`
-hub.server.invoke("getLiveScoreListData_From_ES", "8094", "lnv")
+start_response = requests.get(start_url, params=start_params, headers=headers)
+start_response_json = start_response.json()
+print("Réponse de 'start' :", start_response_json)
 
-# Garder la connexion ouverte pour recevoir les événements
+# Étape 4 : Envoyer le payload nécessaire
+url_send = "https://dataprojectservicesignalr.azurewebsites.net/signalr/send"
+params_send = {
+    'transport': 'serverSentEvents',
+    'clientProtocol': '1.5',
+    'connectionToken': connection_token,
+    'connectionData': '[{"name":"signalrlivehubfederations"}]'
+}
+
+# Exemple de données que vous pourriez devoir envoyer, adaptées en fonction des spécificités du serveur
+data = {
+    "data": '{"H":"signalrlivehubfederations","M":"getLiveScoreListData_From_ES","A":["8260","lnv"],"I":0}'  # Remplacez "matchIdHere" par l'ID du match si requis
+}
+
+send_response = requests.post(url_send, params=params_send, headers=headers, data=data)
+print("Réponse de 'send' :", send_response.status_code, send_response.text)
+
+# Garder le programme actif pour écouter les messages
 try:
     while True:
-        pass
+        time.sleep(1)
 except KeyboardInterrupt:
-    connection.close()
+    print("Arrêt...")
