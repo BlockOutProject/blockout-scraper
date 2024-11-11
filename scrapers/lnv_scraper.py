@@ -5,10 +5,12 @@ from bs4 import BeautifulSoup
 import re
 from api.matchs_api import get_match_by_pool_teams_date, update_match, get_active_matches_by_pool_id
 from api.teams_api import get_team_by_pool_and_name
-from models.match import Match
-from utils import fetch, get_full_team_name
+from models.match import Match, MatchStatus
 from typing import Optional, Tuple
 import xml.etree.ElementTree as ET
+
+from utils.scraper_logic import fetch
+from utils.team_utils import get_full_team_name
 
 logger = logging.getLogger('blockout')
 
@@ -53,6 +55,8 @@ def prepare_updated_match(existing_match: Match, match_datetime, set) -> Match:
     updated_match.match_date = match_datetime.isoformat()
     if set != "0-0":
         updated_match.set = set
+        if '3' in set:
+            updated_match.status = MatchStatus.FINISHED.value
     return updated_match
 
 async def extract_main_id(soup: BeautifulSoup) -> Optional[str]:

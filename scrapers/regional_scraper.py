@@ -1,18 +1,12 @@
 import asyncio
-import aiohttp
 from bs4 import BeautifulSoup
 import logging
 import re
 from models.pool import Pool, PoolDivisionCode
 from services.pools_service import add_or_update_pool, deactivate_pools
-from utils import (
-    create_output_directory,
-    delete_output_directory,
-    handle_csv_download_and_parse,
-    parse_season,
-    standardize_division_name,
-    fetch
-)
+from utils.file_utils import create_output_directory, delete_output_directory
+from utils.scraper_logic import fetch, handle_csv_download_and_parse
+from utils.utils import parse_season, standardize_division_name
 
 logger = logging.getLogger('blockout')
 
@@ -30,7 +24,7 @@ async def scrape_pools_from_league(http_session, league_code, league_name, leagu
     """
     scraped_pool_codes = set()
     
-    if league_code not in ['LILO', 'LIMY', 'LIGY', 'LIGU', 'LIMART']:
+    if league_code not in ['LIMY', 'LIGY', 'LIGU', 'LIMART', 'LIRE']:
 
         logger.debug(f"Scraping des pools pour la ligue: {league_name} ({league_code})")
         league_page_url = league_page_url.replace('https://', 'http://')

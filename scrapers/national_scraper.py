@@ -3,16 +3,9 @@ from bs4 import BeautifulSoup
 import logging
 from models.pool import Pool, PoolDivisionCode
 from services.pools_service import add_or_update_pool, deactivate_pools
-from utils import (
-    create_output_directory,
-    delete_output_directory,
-    extract_season_from_url,
-    handle_csv_download_and_parse,
-    standardize_division_name,
-    parse_season,
-    extract_national_division,
-    fetch
-)
+from utils.file_utils import create_output_directory, delete_output_directory
+from utils.scraper_logic import fetch, handle_csv_download_and_parse
+from utils.utils import extract_national_division, extract_season_from_url, parse_season, standardize_division_name
 
 logger = logging.getLogger('blockout')
 

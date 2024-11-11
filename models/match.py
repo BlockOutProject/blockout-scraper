@@ -5,7 +5,7 @@ from datetime import datetime
 
 class MatchStatus(Enum):
     UPCOMING = "UPCOMING"
-    COMPLETED = "COMPLETED"
+    FINISHED = "FINISHED"
 
 @dataclass
 class Match:

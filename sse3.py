@@ -1,5 +1,4 @@
 import requests
-import json
 import sseclient
 import time
 import threading

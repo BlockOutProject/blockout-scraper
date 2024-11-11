@@ -7,3 +7,4 @@ pyyaml
 APScheduler
 psycopg2-binary
 sseclient
+chardet

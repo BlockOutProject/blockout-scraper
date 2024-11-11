@@ -1,18 +1,12 @@
-# pro_scraper.py
 import asyncio
-from dataclasses import asdict
 import logging
-
-import aiohttp
 from models.pool import Pool, PoolDivisionCode
 from scrapers.lnv_scraper import add_match_live_code, parse_and_update_matches
 from services.pools_service import add_or_update_pool
-from utils import (
-    create_output_directory,
-    delete_output_directory,
-    handle_csv_download_and_parse,
-    parse_season
-)
+from utils.file_utils import create_output_directory, delete_output_directory
+from utils.scraper_logic import handle_csv_download_and_parse
+from utils.utils import parse_season
+
 
 logger = logging.getLogger('blockout')
 
