@@ -1,5 +1,6 @@
 aiohttp
 pytest
+pytest-asyncio
 beautifulsoup4
 requests
 sqlalchemy
@@ -8,3 +9,6 @@ APScheduler
 psycopg2-binary
 sseclient
 chardet
+aioresponses
+faker
+pytest-timeout

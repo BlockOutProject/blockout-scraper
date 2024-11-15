@@ -1,7 +1,9 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
 from models.execution_log import ExecutionLog
+from utils.handlers.error_handler import handle_errors
 
+@handle_errors
 def log_execution(session: Session, start_time: datetime, duration: int, status: str, logs: list):
     """
     Enregistre un log d'exécution dans la base de données.

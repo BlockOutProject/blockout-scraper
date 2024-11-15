@@ -1,21 +1,36 @@
+import html
+from typing import Optional
 import aiohttp
 import logging
 from abc import ABC, abstractmethod
+import chardet
 
 class Scraper(ABC):
     def __init__(self, session: aiohttp.ClientSession):
         self.session = session
         self.logger = logging.getLogger(self.__class__.__name__)
+        
 
     async def fetch(self, url: str) -> str:
-        """Récupère le contenu d'une URL."""
+        """
+        Récupère le contenu d'une URL en gérant les problèmes d'encodage.
+        """
         try:
-            async with self.session.get(url) as response:
+            headers = {
+                "User-Agent": "Mozilla/5.0"
+            }
+            async with self.session.get(url, headers=headers, ssl=False) as response:
                 response.raise_for_status()
-                content = await response.text()
-                return content
+
+                raw_content = await response.content.read()
+                detected_encoding = chardet.detect(raw_content)['encoding']
+                encoding = detected_encoding or 'utf-8'
+                decoded_content = raw_content.decode(encoding, errors='replace')
+                decoded_content = html.unescape(decoded_content)
+
+                return decoded_content
         except Exception as e:
-            self.logger.error(f"Erreur lors de la récupération de l'URL '{url}': {e}")
+            self.logger.error(f"Erreur lors de la récupération de l'URL '{url}' : {e}")
             raise
 
     @abstractmethod

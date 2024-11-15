@@ -14,15 +14,13 @@ def delete_output_directory(folder_path: str) -> None:
     Parameters:
     - folder_path (str): Le chemin du répertoire à supprimer.
     """
-    try:
-        if os.path.exists(folder_path):
-            shutil.rmtree(folder_path)
-            logger.debug(f"Répertoire supprimé: {folder_path}")
-        else:
-            logger.warning(f"Tentative de suppression : le répertoire {folder_path} n'existe pas.")
-    except Exception as e:
-        logger.error(f"Erreur lors de la suppression du répertoire : {str(e)}")
-        raise
+    
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
+        logger.debug(f"Répertoire supprimé: {folder_path}")
+    else:
+        logger.warning(f"Tentative de suppression : le répertoire {folder_path} n'existe pas.")
+
     
 def parse_csv(file_path: str) -> Iterator[dict]:
     """

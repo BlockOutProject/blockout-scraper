@@ -15,10 +15,8 @@ def parse_date(date_str: str, time_str: str) -> Optional[datetime]:
     Returns:
     - Optional[datetime]: L'objet datetime correspondant ou None en cas d'erreur.
     """
-    try:
-        date_time = datetime.strptime(f'{date_str} {time_str}', '%Y-%m-%d %H:%M')
-        logger.debug(f"Date parsée: {date_str} {time_str} -> {date_time}")
-        return date_time
-    except ValueError as e:
-        logger.warning(f"Erreur lors du parsing de la date '{date_str} {time_str}': {e}")
-        return None
+    
+    date_time = datetime.strptime(f'{date_str} {time_str}', '%Y-%m-%d %H:%M')
+    logger.debug(f"Date parsée: {date_str} {time_str} -> {date_time}")
+    return date_time
+

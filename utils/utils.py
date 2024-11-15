@@ -3,8 +3,6 @@ import re
 import logging
 from typing import Optional
 
-from utils.exceptions import DivisionExtractionError, SeasonParsingError, StandardizationError, URLExtractionError
-
 logger = logging.getLogger('blockout')
 
 try:
@@ -24,12 +22,11 @@ def standardize_division_name(division_name: str) -> dict:
                 if division_name in variations:
                     logger.debug(f"Division standardisée trouvée: {division_name} -> {category}, Genre: {gender}")
                     return {"division": category, "gender": gender}
-        # Aucun match trouvé
         logger.debug(f"Division non standardisée: {division_name}")
         return {"division": division_name.strip(), "gender": None}
     except Exception as e:
         logger.error(f"[standardize_division_name] Erreur lors de la standardisation de '{division_name}': {e}")
-        raise StandardizationError(f"Erreur de standardisation pour la division: {division_name}") from e
+        raise 
     
 def parse_season(season_str: str) -> int:
     """
@@ -49,7 +46,7 @@ def parse_season(season_str: str) -> int:
         return combined_years
     except Exception as e:
         logger.error(f"[parse_season] Erreur inattendue lors du parsing de la saison '{season_str}': {e}")
-        raise SeasonParsingError(f"Erreur inattendue pour la saison: {season_str}") from e
+        raise 
     
 def extract_season_from_url(url: str) -> Optional[str]:
     """
@@ -62,11 +59,11 @@ def extract_season_from_url(url: str) -> Optional[str]:
             season = f"{start_year}/{end_year}"
             logger.debug(f"Saison extraite de l'URL '{url}': {season}")
             return season
-        logger.warning(f"[extract_season_from_url] Aucune saison trouvée dans l'URL: {url}")
+        logger.warning(f"Aucune saison trouvée dans l'URL: {url}")
         return None
     except Exception as e:
-        logger.error(f"[extract_season_from_url] Erreur lors de l'extraction de la saison depuis l'URL '{url}': {e}")
-        raise URLExtractionError(f"Erreur d'extraction de saison pour l'URL: {url}") from e
+        logger.error(f"Erreur lors de l'extraction de la saison depuis l'URL '{url}': {e}")
+        raise 
 
 def extract_national_division(pool_name: str) -> str:
     """
@@ -78,5 +75,5 @@ def extract_national_division(pool_name: str) -> str:
         return division_name
     except Exception as e:
         logger.error(f"[extract_national_division] Erreur inattendue lors de l'extraction de la division pour '{pool_name}': {e}")
-        raise DivisionExtractionError(f"Erreur inattendue pour le pool_name: {pool_name}") from e
+        raise 
 
