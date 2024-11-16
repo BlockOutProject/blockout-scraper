@@ -1,14 +1,14 @@
 from typing import Optional
 import aiohttp
 import logging
-from api.pools_api import create_pool, deactivate_pool, get_active_pools_by_league_code, get_pool_by_code_league_season, update_pool
+from api.pools_api import create_pool, deactivate_pool, get_active_pools_by_league_code, update_pool
 from models.pool import Pool
 from utils.handlers.error_handler import handle_errors
 
 logger = logging.getLogger('blockout')
 
 @handle_errors
-async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool) -> Optional[Pool]:
+async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool, existing_pool: Optional[Pool]) -> Optional[Pool]:
     """
     Vérifie si une pool existe et la met à jour ou la crée selon les besoins.
     """
@@ -17,7 +17,6 @@ async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool) -> Opti
     if missing_fields:
         raise ValueError(f"Les champs obligatoires suivants sont manquants : {', '.join(missing_fields)}.")
 
-    existing_pool = await get_pool_by_code_league_season(session, pool.pool_code, pool.league_code, pool.season)
     if existing_pool:
         changes = []
         pool.id = existing_pool.id

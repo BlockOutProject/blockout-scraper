@@ -8,7 +8,7 @@ from utils.handlers.error_handler import handle_errors
 logger = logging.getLogger('blockout')
 
 @handle_errors
-async def add_or_update_team(session: aiohttp.ClientSession, team: Team) -> Optional[Team]:
+async def add_or_update_team(session: aiohttp.ClientSession, team: Team, existing_team: Optional[Team]) -> Optional[Team]:
     """
     Vérifie l'existence d'une équipe et la met à jour ou la crée selon les besoins.
     """
@@ -17,7 +17,6 @@ async def add_or_update_team(session: aiohttp.ClientSession, team: Team) -> Opti
     if missing_fields:
         raise ValueError(f"Les champs obligatoires suivants sont manquants : {', '.join(missing_fields)}.")
 
-    existing_team = await get_team_by_pool_and_name(session, team.pool_id, team.team_name)
     if existing_team:
         team.id = existing_team.id
         changes = []

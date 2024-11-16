@@ -5,6 +5,7 @@ import re
 from typing import Optional, Tuple
 from bs4 import BeautifulSoup
 from api.matches_api import get_active_matches_by_pool_id, get_match_by_pool_teams_date, update_match
+from api.pools_api import get_pools_by_league_and_season
 from api.teams_api import get_team_by_pool_and_name
 from models.match import Match, MatchStatus
 from models.pool import Pool, PoolDivisionCode, PoolGender
@@ -22,6 +23,7 @@ class ProScraper(Scraper):
         super().__init__(session)
         self.folder = create_output_directory("Pro")
         self.raw_season = "2024/2025" 
+        self.parsed_season = parse_season(self.raw_season)
         self.league_code = "AALNV"
         self.league_name = "PRO"
         self.pools_json = [
@@ -39,12 +41,16 @@ class ProScraper(Scraper):
         self.logger.debug("Début du scraping des poules professionnelles.")
 
         try:
+            
+            existing_pools = await get_pools_by_league_and_season(self.session, self.league_code, self.parsed_season)
+            existing_pools_dict = {(pool.pool_code, pool.league_code, pool.season): pool for pool in existing_pools}
+            
             for pool_json in self.pools_json:
                 try:
                     pool_data = {
                         "pool_code": pool_json['code'],
                         "league_code": self.league_code,
-                        "season": parse_season(self.raw_season),
+                        "season": self.parsed_season,
                         "league_name": self.league_name,
                         "pool_name": pool_json['pool_name'],
                         "division_code": PoolDivisionCode.PRO,
@@ -52,8 +58,11 @@ class ProScraper(Scraper):
                         "gender": pool_json['gender']
                     }
                     pool = Pool(**pool_data)
-
-                    new_pool = await add_or_update_pool(self.session, pool)
+                    
+                    key = (pool.pool_code, pool.league_code, pool.season)
+                    existing_pool = existing_pools_dict.get(key)
+                    
+                    new_pool = await add_or_update_pool(self.session, pool, existing_pool)
                     if new_pool:
                         tasks.append(self.execute_task_chain(
                             new_pool.id, new_pool.pool_code, self.raw_season,

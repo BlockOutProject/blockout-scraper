@@ -26,8 +26,7 @@ async def get_pools_by_league_and_season(session: aiohttp.ClientSession, league_
     """
     Récupère toutes les pools pour un code de ligue et une saison spécifiques.
     """
-    url = f"{POOL_API_URL}/league/{league_code}/season/{season}"
-    return await session.get(url)
+    return await session.get(f"{POOL_API_URL}/league/{league_code}/season/{season}")
 
 @handle_errors
 @handle_api_response(response_type=Pool)

@@ -28,6 +28,15 @@ async def get_active_matches_by_pool_id(session: aiohttp.ClientSession, pool_id:
 
 
 @handle_errors
+@handle_api_response(response_type=List[Match])
+async def get_matches_by_pool(session: aiohttp.ClientSession, pool_id: int) -> List[Match]:
+    """
+    Récupère tous les matchs d'une poule via une seule requête.
+    """
+    return await session.get(f"{MATCH_API_URL}/pool/{pool_id}")
+
+
+@handle_errors
 @handle_api_response(response_type=Match)
 async def create_match(session: aiohttp.ClientSession, match: Match) -> Optional[Match]:
     """

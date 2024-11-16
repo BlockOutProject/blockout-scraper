@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from api.matches_api import get_matches_by_pool
+from api.teams_api import get_teams_by_pool
 from utils.downloader import download_csv
 from models.match import Match, MatchStatus
 from models.team import Team
@@ -38,67 +40,89 @@ async def parse_and_add_matches_from_csv(http_session, pool_id: int, csv_path: s
     """
     Parse le fichier CSV et ajoute les matchs et les équipes via des appels API REST.
     """
-
     logger.debug(f"Parsing et ajout des matchs depuis le CSV: {csv_path}")
+
+    # Récupérer tous les matchs existants pour la poule
+    existing_matches = await get_matches_by_pool(http_session, pool_id) or []
+    existing_matches_dict = {(match.league_code, match.match_code): match for match in existing_matches}
+
+    # Récupération des équipes existantes
+    existing_teams = await get_teams_by_pool(http_session, pool_id) or []
+    existing_teams_dict = {(team.pool_id, team.team_name): team for team in existing_teams}
+
     scraped_team_names = set()
     scraped_match_codes = set()
 
-    for data in parse_csv(csv_path):
-        club_a_id = data['club_a_id']
-        club_b_id = data['club_b_id']
+    parsed_data = parse_csv(csv_path)
+    if not parsed_data:
+        raise ValueError(f"Le fichier CSV {csv_path} ne contient pas de données valides.")
 
-        if (club_a_id and club_b_id):
-            match_datetime = parse_date(data['match_date'], data['match_time'])
-            if not match_datetime:
-                logger.warning(f"Date invalide pour le match {data['match_code']}. Match ignoré.")
-                continue 
+    for data in parsed_data:
+        club_a_id = data.get('club_a_id')
+        club_b_id = data.get('club_b_id')
 
-            # Ajouter ou mettre à jour les équipes
-            team_a_data = {
-                "team_name": data['team_a_name'],
-                "club_id": club_a_id,
-                "pool_id": pool_id
+        if not club_a_id or not club_b_id:
+            logger.debug(f"Les données pour le match {data.get('match_code')} sont incomplètes. Match ignoré.")
+            continue
+
+        match_datetime = parse_date(data.get('match_date'), data.get('match_time'))
+        if not match_datetime:
+            logger.debug(f"Date invalide pour le match {data.get('match_code')}. Match ignoré.")
+            continue
+
+        # Ajouter ou mettre à jour les équipes
+        team_a_data = {
+            "team_name": data.get('team_a_name'),
+            "club_id": club_a_id,
+            "pool_id": pool_id
+        }
+        team_b_data = {
+            "team_name": data.get('team_b_name'),
+            "club_id": club_b_id,
+            "pool_id": pool_id
+        }
+
+        team_a = Team(**team_a_data)
+        team_b = Team(**team_b_data)
+
+        team_a_key = (team_a.pool_id, team_a.team_name)
+        team_b_key = (team_b.pool_id, team_b.team_name)
+
+        existing_team_a = existing_teams_dict.get(team_a_key)
+        existing_team_b = existing_teams_dict.get(team_b_key)
+
+        new_team_a = await add_or_update_team(http_session, team_a, existing_team_a)
+        new_team_b = await add_or_update_team(http_session, team_b, existing_team_b)
+
+        if new_team_a and new_team_b:
+            scraped_team_names.add(new_team_a.team_name)
+            scraped_team_names.add(new_team_b.team_name)
+
+            # Ajouter ou mettre à jour le match
+            match_data = {
+                "match_code": data.get('match_code'),
+                "league_code": data.get('league_code'),
+                "pool_id": pool_id,
+                "team_id_a": new_team_a.id,
+                "team_id_b": new_team_b.id,
+                "match_date": match_datetime,
+                "set": None if not data.get('set') else data['set'].replace('/', '-'),
+                "score": None if not data.get('score') else data['score'],
+                "status": MatchStatus.FINISHED if data.get('set') and data.get('score') else MatchStatus.UPCOMING,
+                "venue": data.get('venue'),
+                "referee1": data.get('referee1'),
+                "referee2": data.get('referee2')
             }
-            team_b_data = {
-                "team_name": data['team_b_name'],
-                "club_id": club_b_id,
-                "pool_id": pool_id
-            }
+            match = Match(**match_data)
 
-            team_a = Team(**team_a_data)
-            team_b = Team(**team_b_data)
+            match_key = (match.league_code, match.match_code)
+            existing_match = existing_matches_dict.get(match_key)
 
-            new_team_a = await add_or_update_team(http_session, team_a)
-            new_team_b = await add_or_update_team(http_session, team_b)
-
-            if new_team_a and new_team_b:
-                scraped_team_names.add(new_team_a.team_name)
-                scraped_team_names.add(new_team_b.team_name)
-
-                # Ajouter ou mettre à jour le match
-                match_data = {
-                    "match_code": data['match_code'],
-                    "league_code": data['league_code'],
-                    "pool_id": pool_id,
-                    "team_id_a": new_team_a.id,
-                    "team_id_b": new_team_b.id,
-                    "match_date": match_datetime,
-                    "set": None if not data['set'] else data['set'].replace('/', '-'),
-                    "score": None if not data['score'] else data['score'],
-                    "status": MatchStatus.FINISHED if data['set'] and data['score'] else MatchStatus.UPCOMING,
-                    "venue": None if not data['venue'] else data['venue'],
-                    "referee1": None if not data['referee1'] else data['referee1'],
-                    "referee2": None if not data['referee2'] else data['referee2']
-                }
-                match = Match(**match_data)
-                new_match = await add_or_update_match(http_session, match)
-                scraped_match_codes.add(new_match.match_code)
-
+            new_match = await add_or_update_match(http_session, match, existing_match)
+            scraped_match_codes.add(new_match.match_code)
 
     await asyncio.gather(
         deactivate_teams(http_session, pool_id, scraped_team_names),
         deactivate_matches(http_session, pool_id, scraped_match_codes)
     )
-    logger.debug(f"Terminé l'ajout des matchs depuis le CSV: {csv_path}")
-
-        
+    logger.debug(f"Terminé l'ajout des matchs depuis le CSV: {csv_path}")        

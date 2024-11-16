@@ -49,6 +49,15 @@ async def update_team(session: aiohttp.ClientSession, team: Team, changes: List[
 
 @handle_errors
 @handle_api_response(response_type=List[Team])
+async def get_teams_by_pool(session: aiohttp.ClientSession, pool_id: int) -> List[Team]:
+    """
+    Récupère toutes les équipes associées à une poule spécifique via une seule requête.
+    """
+    return await session.get(f"{TEAM_API_URL}/pool/{pool_id}")
+
+
+@handle_errors
+@handle_api_response(response_type=List[Team])
 async def get_active_teams_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[List[Team]]:
     """
     Récupère les équipes actives pour une pool donnée.

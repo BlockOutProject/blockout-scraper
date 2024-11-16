@@ -9,7 +9,7 @@ from utils.handlers.error_handler import handle_errors
 logger = logging.getLogger('blockout')
 
 @handle_errors
-async def add_or_update_match(session: aiohttp.ClientSession, match: Match) -> Optional[Match]:
+async def add_or_update_match(session: aiohttp.ClientSession, match: Match, existing_match: Optional[Match]) -> Optional[Match]:
     """
     Vérifie l'existence d'un match et le met à jour ou le crée selon les besoins.
     """
@@ -18,8 +18,6 @@ async def add_or_update_match(session: aiohttp.ClientSession, match: Match) -> O
     missing_fields = [field for field in required_fields if not getattr(match, field, None)]
     if missing_fields:
         raise ValueError(f"Les champs obligatoires suivants sont manquants : {', '.join(missing_fields)}.")
-
-    existing_match = await get_match_by_league_and_code(session, match.league_code, match.match_code)
     
     if existing_match:
         # Cas où le match existe
