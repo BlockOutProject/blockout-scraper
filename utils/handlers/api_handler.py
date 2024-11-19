@@ -1,13 +1,10 @@
 from functools import wraps
-import logging
 from typing import Optional, Type, Union, get_args, get_origin
 from datetime import datetime
 from enum import Enum
-from dataclasses import dataclass, fields
+from dataclasses import fields
 import aiohttp
-
-logger = logging.getLogger("blockout")
-
+from config.logger_config import logger
 
 def handle_api_response(response_type: Optional[Type] = None):
     """

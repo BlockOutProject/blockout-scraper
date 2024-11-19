@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from api.matches_api import get_matches_by_pool
 from api.teams_api import get_teams_by_pool
 from utils.downloader import download_csv
@@ -10,8 +9,7 @@ from services.teams_service import add_or_update_team, deactivate_teams
 from utils.date_utils import parse_date
 from utils.file_utils import parse_csv
 from utils.handlers.error_handler import handle_errors
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 @handle_errors
 async def handle_csv_download_and_parse(

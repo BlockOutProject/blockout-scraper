@@ -12,3 +12,4 @@ chardet
 aioresponses
 faker
 pytest-timeout
+python-dotenv

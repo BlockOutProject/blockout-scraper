@@ -1,11 +1,9 @@
 from typing import Optional
 import aiohttp
-import logging
 from api.pools_api import create_pool, deactivate_pool, get_active_pools_by_league_code, update_pool
 from models.pool import Pool
 from utils.handlers.error_handler import handle_errors
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 @handle_errors
 async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool, existing_pool: Optional[Pool]) -> Optional[Pool]:

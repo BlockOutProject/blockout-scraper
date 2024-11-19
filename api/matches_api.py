@@ -1,16 +1,11 @@
 import aiohttp
-import logging
 from datetime import datetime
 from typing import Optional, List
-
+from config.env_config import MATCH_API_URL
 from models.match import Match, MatchStatus
 from utils.handlers.error_handler import handle_errors
 from utils.handlers.api_handler import handle_api_response
-
-logger = logging.getLogger('blockout')
-
-MATCH_API_URL = 'http://localhost:8083/api/matches'
-
+from config.logger_config import logger
 
 @handle_errors
 @handle_api_response(response_type=Match)

@@ -1,14 +1,10 @@
 from typing import Optional, List
 import aiohttp
-import logging
+from config.env_config import TEAM_API_URL
 from utils.handlers.error_handler import handle_errors
 from utils.handlers.api_handler import handle_api_response
 from models.team import Team
-
-logger = logging.getLogger('blockout')
-
-TEAM_API_URL = 'http://localhost:8082/api/teams'
-
+from config.logger_config import logger
 
 @handle_errors
 @handle_api_response(response_type=Team)

@@ -1,9 +1,7 @@
 import json
 from typing import Optional
 import unicodedata
-import logging
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 # Chargement du fichier JSON contenant les alias
 try:

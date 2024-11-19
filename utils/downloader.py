@@ -1,8 +1,6 @@
 import aiohttp
 import asyncio
-import logging
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 MAX_RETRIES = 3       # Nombre maximum de tentatives de téléchargement
 RETRY_DELAY = 2       # Délai en secondes entre chaque tentative en cas d'échec

@@ -1,19 +1,15 @@
 import asyncio
-import logging
 import aiohttp
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timezone
 from db import create_tables
-from config.logger_config import setup_logging
 from models.accumulating_handler import AccumulatingHandler
 from scrapers.scraper_factory import ScraperFactory
 from services.execution_logs_service import log_execution
-from services.matchs_service import log_started_matches
 from session_manager import get_db_session
+from config.logger_config import logger
 
 lock = asyncio.Lock()
-logger = logging.getLogger('blockout')
-setup_logging()
 accumulating_handler = AccumulatingHandler()
 logger.addHandler(accumulating_handler)
 

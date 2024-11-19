@@ -1,9 +1,7 @@
 import json
 import re
-import logging
 from typing import Optional
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 try:
     with open('config/mapping/standardized_divisions.json', 'r', encoding='utf-8') as f:

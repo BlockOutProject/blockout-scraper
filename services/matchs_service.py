@@ -2,11 +2,9 @@ from typing import Optional, Set, List
 import aiohttp
 from datetime import datetime, timezone
 from api.matches_api import create_match, deactivate_match, get_active_matches_by_pool_id, get_match_by_league_and_code, get_started_matches, update_match
-import logging
 from models.match import Match, MatchStatus
 from utils.handlers.error_handler import handle_errors
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 @handle_errors
 async def add_or_update_match(session: aiohttp.ClientSession, match: Match, existing_match: Optional[Match]) -> Optional[Match]:

@@ -1,15 +1,13 @@
 import html
 from typing import Optional
 import aiohttp
-import logging
 from abc import ABC, abstractmethod
 import chardet
+from config.logger_config import logger
 
 class Scraper(ABC):
     def __init__(self, session: aiohttp.ClientSession):
-        self.session = session
-        self.logger = logging.getLogger(self.__class__.__name__)
-        
+        self.session = session        
 
     async def fetch(self, url: str) -> str:
         """
@@ -30,7 +28,7 @@ class Scraper(ABC):
 
                 return decoded_content
         except Exception as e:
-            self.logger.error(f"Erreur lors de la récupération de l'URL '{url}' : {e}")
+            logger.error(f"Erreur lors de la récupération de l'URL '{url}' : {e}")
             raise
 
     @abstractmethod

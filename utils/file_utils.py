@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
 import os
 import shutil
-import logging
 import csv
 from typing import Iterator
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 def delete_output_directory(folder_path: str) -> None:
     """

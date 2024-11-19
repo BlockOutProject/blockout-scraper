@@ -1,9 +1,7 @@
 from functools import wraps
 import aiohttp
 import inspect
-import logging
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 def handle_errors(func):
     """

@@ -1,25 +1,13 @@
 import logging
-import logging.config
-import yaml
-import os
+from config.env_config import LOG_LEVEL
 
-def setup_logging(
-    default_path='logging.yaml',
-    default_level=logging.INFO,
-    env_key='LOG_CFG'
-):
-    """
-    Configure le système de logging à partir d'un fichier YAML.
-    """
-    path = default_path
-    value = os.getenv(env_key, None)
-    if value:
-        path = value
+# Récupérer le niveau de log depuis une variable d'environnement
+log_level = getattr(logging, LOG_LEVEL, logging.INFO)  # Convertir en niveau numérique
 
-    if os.path.exists(path):
-        with open(path, 'rt') as f:
-            config = yaml.safe_load(f.read())
-        logging.config.dictConfig(config)
-    else:
-        logging.basicConfig(level=default_level)
-        logging.warning("Le fichier de configuration du logging est introuvable. Utilisation de la configuration par défaut.")
+# Configurer le logger de base
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)

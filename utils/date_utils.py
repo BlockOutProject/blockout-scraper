@@ -1,8 +1,6 @@
-import logging
 from datetime import datetime
 from typing import Optional
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 def parse_date(date_str: str, time_str: str) -> Optional[datetime]:
     """

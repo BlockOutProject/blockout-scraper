@@ -1,11 +1,9 @@
 from typing import Optional
 import aiohttp
-from api.teams_api import create_team, deactivate_team, get_active_teams_by_pool_id, get_team_by_pool_and_name, update_team
-import logging
+from api.teams_api import create_team, deactivate_team, get_active_teams_by_pool_id, update_team
 from models.team import Team
 from utils.handlers.error_handler import handle_errors
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 @handle_errors
 async def add_or_update_team(session: aiohttp.ClientSession, team: Team, existing_team: Optional[Team]) -> Optional[Team]:
