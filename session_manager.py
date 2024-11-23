@@ -2,9 +2,7 @@
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
 from db import engine
-import logging
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

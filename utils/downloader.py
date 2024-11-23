@@ -1,8 +1,6 @@
 import aiohttp
 import asyncio
-import logging
-
-logger = logging.getLogger('blockout')
+from config.logger_config import logger
 
 MAX_RETRIES = 3       # Nombre maximum de tentatives de téléchargement
 RETRY_DELAY = 2       # Délai en secondes entre chaque tentative en cas d'échec
@@ -13,7 +11,7 @@ async def download_csv(
     session: aiohttp.ClientSession,
     league_code: str,
     pool_code: str,
-    season: str,
+    raw_season: str,
     folder: str
 ) -> str:
     """
@@ -31,7 +29,7 @@ async def download_csv(
     """
     download_url = "http://www.ffvbbeach.org/ffvbapp/resu/vbspo_calendrier_export.php"
     data = {
-        'cal_saison': season,
+        'cal_saison': raw_season,
         'cal_codent': league_code,
         'cal_codpoule': pool_code,
     }

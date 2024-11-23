@@ -1,5 +1,6 @@
 aiohttp
 pytest
+pytest-asyncio
 beautifulsoup4
 requests
 sqlalchemy
@@ -7,4 +8,8 @@ pyyaml
 APScheduler
 psycopg2-binary
 sseclient
-signalr-client
+chardet
+aioresponses
+faker
+pytest-timeout
+python-dotenv
