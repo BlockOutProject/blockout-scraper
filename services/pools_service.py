@@ -6,7 +6,7 @@ from utils.handlers.error_handler import handle_errors
 from config.logger_config import logger
 
 @handle_errors
-async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool, existing_pool: Optional[Pool]) -> Optional[Pool]:
+async def add_or_update_pool(session: aiohttp.ClientSession, pool: Pool, existing_pool: Optional[Pool]) -> Pool:
     """
     Vérifie si une pool existe et la met à jour ou la crée selon les besoins.
     """

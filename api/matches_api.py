@@ -1,6 +1,6 @@
 import aiohttp
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 from config.env_config import MATCH_API_URL
 from models.match import Match, MatchStatus
 from utils.handlers.error_handler import handle_errors
@@ -14,8 +14,8 @@ async def get_match_by_league_and_code(session: aiohttp.ClientSession, league_co
 
 
 @handle_errors
-@handle_api_response(response_type=List[Match])
-async def get_active_matches_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[List[Match]]:
+@handle_api_response(response_type=list[Match])
+async def get_active_matches_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[list[Match]]:
     """
     Récupère les matchs actifs pour une pool donnée.
     """
@@ -23,8 +23,8 @@ async def get_active_matches_by_pool_id(session: aiohttp.ClientSession, pool_id:
 
 
 @handle_errors
-@handle_api_response(response_type=List[Match])
-async def get_matches_by_pool(session: aiohttp.ClientSession, pool_id: int) -> List[Match]:
+@handle_api_response(response_type=list[Match])
+async def get_matches_by_pool(session: aiohttp.ClientSession, pool_id: int) -> list[Match]:
     """
     Récupère tous les matchs d'une poule via une seule requête.
     """
@@ -33,7 +33,7 @@ async def get_matches_by_pool(session: aiohttp.ClientSession, pool_id: int) -> L
 
 @handle_errors
 @handle_api_response(response_type=Match)
-async def create_match(session: aiohttp.ClientSession, match: Match) -> Optional[Match]:
+async def create_match(session: aiohttp.ClientSession, match: Match) -> Match:
     """
     Envoie une requête POST pour créer un nouveau match.
     """
@@ -45,7 +45,7 @@ async def create_match(session: aiohttp.ClientSession, match: Match) -> Optional
 
 @handle_errors
 @handle_api_response(response_type=Match)
-async def update_match(session: aiohttp.ClientSession, match: Match, changes: List[str] = []) -> Optional[Match]:
+async def update_match(session: aiohttp.ClientSession, match: Match, changes: list[str] = []) -> Match:
     """
     Envoie une requête PUT pour mettre à jour un match existant.
     """
@@ -67,8 +67,8 @@ async def deactivate_match(session: aiohttp.ClientSession, match_id: int) -> Non
 
 
 @handle_errors
-@handle_api_response(response_type=List[Match])
-async def get_started_matches(session: aiohttp.ClientSession, status: MatchStatus, active: bool, current_time: str) -> Optional[List[Match]]:
+@handle_api_response(response_type=list[Match])
+async def get_started_matches(session: aiohttp.ClientSession, status: MatchStatus, active: bool, current_time: str) -> Optional[list[Match]]:
     """
     Récupère les matchs qui ont commencé via l'API.
     """

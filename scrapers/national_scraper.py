@@ -1,6 +1,6 @@
 import asyncio
 from bs4 import BeautifulSoup
-
+from config.logger_config import logger
 from api.pools_api import get_pools_by_league_and_season
 from models.pool import Pool, PoolDivisionCode
 from models.scraper import Scraper
@@ -19,12 +19,12 @@ class NationalScraper(Scraper):
         self.league_name = "NATIONAL"
 
     async def scrape(self):
-        self.logger.debug("Début du scraping des poules nationales.")
+        logger.debug("Début du scraping des poules nationales.")
 
         try:
             html_content = await self.fetch(self.national_url)
             if not html_content:
-                self.logger.error("Échec de la récupération du contenu HTML pour les pools nationales.")
+                logger.error("Échec de la récupération du contenu HTML pour les pools nationales.")
                 return
 
             soup = BeautifulSoup(html_content, 'html.parser')
@@ -37,7 +37,7 @@ class NationalScraper(Scraper):
                 break
                         
             if not raw_season:
-                self.logger.warning(f"Aucune saison trouvée pour l'URL: {href}")
+                logger.warning(f"Aucune saison trouvée pour l'URL: {href}")
                 raise ValueError("Saison non trouvée.")
             
             parsed_season = parse_season(raw_season)
@@ -82,7 +82,7 @@ class NationalScraper(Scraper):
                         tasks.append(task)
 
                 except Exception as e:
-                    self.logger.error(f"Erreur lors du traitement de la pool {pool_name} (URL: {href}): {e}")
+                    logger.error(f"Erreur lors du traitement de la pool {pool_name} (URL: {href}): {e}")
 
             # Exécution des tâches de téléchargement CSV
             await asyncio.gather(*tasks)
@@ -92,7 +92,7 @@ class NationalScraper(Scraper):
 
 
         except Exception as e:
-            self.logger.error(f"Erreur critique lors du scraping des poules nationales : {e}")
+            logger.error(f"Erreur critique lors du scraping des poules nationales : {e}")
         finally:
             delete_output_directory(self.folder)
-            self.logger.debug("Fin du scraping des poules nationales.")
+            logger.debug("Fin du scraping des poules nationales.")

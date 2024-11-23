@@ -34,7 +34,11 @@ def handle_api_response(response_type: Optional[Type] = None):
                 return None  # Pas de contenu JSON
 
             elif response.status == 204:
-                return None  # Pas de contenu
+                # Retourner une liste vide si le type attendu est une liste
+                if get_origin(response_type) is list:
+                    return []
+
+                return None
 
             # Traiter les erreurs API
             else:

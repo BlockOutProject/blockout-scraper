@@ -163,3 +163,11 @@ cython_debug/
 
 CSV/
 .DS_Store
+
+# postgres
+local/postgres-data
+
+# environment variables
+.env.dev
+.env.local
+.env

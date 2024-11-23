@@ -16,6 +16,7 @@ from utils.scraper_logic import handle_csv_download_and_parse
 from utils.team_utils import get_full_team_name
 from utils.utils import parse_season
 import xml.etree.ElementTree as ET
+from config.logger_config import logger
 
 
 class ProScraper(Scraper):
@@ -38,7 +39,7 @@ class ProScraper(Scraper):
             raise ValueError("La session aiohttp est non initialisée ou fermée.")
 
         tasks = []
-        self.logger.debug("Début du scraping des poules professionnelles.")
+        logger.debug("Début du scraping des poules professionnelles.")
 
         try:
             
@@ -69,17 +70,17 @@ class ProScraper(Scraper):
                             new_pool.gender, self.folder, pool_json['lnv_url'], pool_json['lnv_xml_url']
                         ))
                 except Exception as e:
-                    self.logger.error(f"Erreur lors du traitement de la pool {pool_json['pool_name']}: {e}")
+                    logger.error(f"Erreur lors du traitement de la pool {pool_json['pool_name']}: {e}")
 
             # Exécute les tâches asynchrones (ex. téléchargement de CSV, parsing XML)
             await asyncio.gather(*tasks)
 
         except Exception as e:
-            self.logger.error(f"Erreur critique lors du scraping des poules professionnelles : {e}")
+            logger.error(f"Erreur critique lors du scraping des poules professionnelles : {e}")
         finally:
             # Nettoyer le dossier, même en cas d'échec
             delete_output_directory(self.folder)
-            self.logger.debug("Fin du scraping des poules professionnelles.")
+            logger.debug("Fin du scraping des poules professionnelles.")
             
             
     async def execute_task_chain(self, pool_id, pool_code, season, gender, folder, lnv_url, lnv_xml_url):
@@ -94,7 +95,7 @@ class ProScraper(Scraper):
         """
         xml_content = await self.fetch(xml_url)
         if not xml_content:
-            self.logger.error("Erreur lors de la récupération du flux XML.")
+            logger.error("Erreur lors de la récupération du flux XML.")
             return
 
         root = ET.fromstring(xml_content)  # Décoder le contenu XML
@@ -155,9 +156,9 @@ class ProScraper(Scraper):
         soup = BeautifulSoup(html_content, 'html.parser')
         main_id = await self.extract_main_id(soup)
         if not main_id:
-            self.logger.error("Impossible de trouver l'identifiant principal.")
+            logger.error("Impossible de trouver l'identifiant principal.")
             return
-        self.logger.debug(f"Identifiant principal trouvé: {main_id}")
+        logger.debug(f"Identifiant principal trouvé: {main_id}")
 
         await self.process_all_days(soup, main_id, pool_id, gender)
 
@@ -189,9 +190,9 @@ class ProScraper(Scraper):
         guest_team_full = get_full_team_name(guest_team_name, gender)
 
         if not home_team_full:
-            self.logger.error(f"Nom d'équipe domicile non trouvé dans les alias: {home_team_name}")
+            logger.error(f"Nom d'équipe domicile non trouvé dans les alias: {home_team_name}")
         if not guest_team_full:
-            self.logger.error(f"Nom d'équipe visiteur non trouvé dans les alias: {guest_team_name}")
+            logger.error(f"Nom d'équipe visiteur non trouvé dans les alias: {guest_team_name}")
 
         date_time = match_block.find("span", id=re.compile("LB_DataOra"))
         if date_time:

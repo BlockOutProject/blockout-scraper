@@ -7,7 +7,7 @@ from utils.handlers.error_handler import handle_errors
 from config.logger_config import logger
 
 @handle_errors
-async def add_or_update_match(session: aiohttp.ClientSession, match: Match, existing_match: Optional[Match]) -> Optional[Match]:
+async def add_or_update_match(session: aiohttp.ClientSession, match: Match, existing_match: Optional[Match]) -> Match:
     """
     Vérifie l'existence d'un match et le met à jour ou le crée selon les besoins.
     """

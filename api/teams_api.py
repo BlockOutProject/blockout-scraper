@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 import aiohttp
 from config.env_config import TEAM_API_URL
 from utils.handlers.error_handler import handle_errors
@@ -18,7 +18,7 @@ async def get_team_by_pool_and_name(session: aiohttp.ClientSession, pool_id: int
 
 @handle_errors
 @handle_api_response(response_type=Team)
-async def create_team(session: aiohttp.ClientSession, team: Team) -> Optional[Team]:
+async def create_team(session: aiohttp.ClientSession, team: Team) -> Team:
     """
     Envoie une requête POST pour créer une nouvelle équipe.
     """
@@ -30,7 +30,7 @@ async def create_team(session: aiohttp.ClientSession, team: Team) -> Optional[Te
 
 @handle_errors
 @handle_api_response(response_type=Team)
-async def update_team(session: aiohttp.ClientSession, team: Team, changes: List[str] = []) -> Optional[Team]:
+async def update_team(session: aiohttp.ClientSession, team: Team, changes: list[str] = []) -> Team:
     """
     Envoie une requête PUT pour mettre à jour une équipe existante.
     """
@@ -44,8 +44,8 @@ async def update_team(session: aiohttp.ClientSession, team: Team, changes: List[
 
 
 @handle_errors
-@handle_api_response(response_type=List[Team])
-async def get_teams_by_pool(session: aiohttp.ClientSession, pool_id: int) -> List[Team]:
+@handle_api_response(response_type=list[Team])
+async def get_teams_by_pool(session: aiohttp.ClientSession, pool_id: int) -> list[Team]:
     """
     Récupère toutes les équipes associées à une poule spécifique via une seule requête.
     """
@@ -53,8 +53,8 @@ async def get_teams_by_pool(session: aiohttp.ClientSession, pool_id: int) -> Lis
 
 
 @handle_errors
-@handle_api_response(response_type=List[Team])
-async def get_active_teams_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[List[Team]]:
+@handle_api_response(response_type=list[Team])
+async def get_active_teams_by_pool_id(session: aiohttp.ClientSession, pool_id: int) -> Optional[list[Team]]:
     """
     Récupère les équipes actives pour une pool donnée.
     """

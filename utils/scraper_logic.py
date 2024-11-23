@@ -90,7 +90,17 @@ async def parse_and_add_matches_from_csv(http_session, pool_id: int, csv_path: s
         existing_team_b = existing_teams_dict.get(team_b_key)
 
         new_team_a = await add_or_update_team(http_session, team_a, existing_team_a)
+        if team_a_key not in existing_teams_dict:
+            existing_teams.append(new_team_a)
+        existing_teams_dict[team_a_key] = new_team_a
+        scraped_team_names.add(new_team_a.team_name)
+
+        # Ajouter ou mettre à jour l'équipe B
         new_team_b = await add_or_update_team(http_session, team_b, existing_team_b)
+        if team_b_key not in existing_teams_dict:
+            existing_teams.append(new_team_b)
+        existing_teams_dict[team_b_key] = new_team_b
+        scraped_team_names.add(new_team_b.team_name)
 
         if new_team_a and new_team_b:
             scraped_team_names.add(new_team_a.team_name)
@@ -117,6 +127,9 @@ async def parse_and_add_matches_from_csv(http_session, pool_id: int, csv_path: s
             existing_match = existing_matches_dict.get(match_key)
 
             new_match = await add_or_update_match(http_session, match, existing_match)
+            if match_key not in existing_matches_dict:
+                existing_matches.append(new_match)
+            existing_matches_dict[match_key] = new_match
             scraped_match_codes.add(new_match.match_code)
 
     await asyncio.gather(

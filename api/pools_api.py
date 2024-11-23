@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional
 import aiohttp
 from config.env_config import POOL_API_URL
 from utils.handlers.error_handler import handle_errors
@@ -17,8 +17,8 @@ async def get_pool_by_code_league_season(
     return await session.get(f"{POOL_API_URL}/{pool_code}/{league_code}/{season}")
 
 @handle_errors
-@handle_api_response(response_type=List[Pool])
-async def get_pools_by_league_and_season(session: aiohttp.ClientSession, league_code: str, season: int) -> List[Pool]:
+@handle_api_response(response_type=list[Pool])
+async def get_pools_by_league_and_season(session: aiohttp.ClientSession, league_code: str, season: int) -> list[Pool]:
     """
     Récupère toutes les pools pour un code de ligue et une saison spécifiques.
     """
@@ -26,7 +26,7 @@ async def get_pools_by_league_and_season(session: aiohttp.ClientSession, league_
 
 @handle_errors
 @handle_api_response(response_type=Pool)
-async def create_pool(session: aiohttp.ClientSession, pool: Pool) -> Optional[Pool]:
+async def create_pool(session: aiohttp.ClientSession, pool: Pool) -> Pool:
     """
     Envoie une requête POST pour créer une nouvelle pool.
     """
@@ -38,7 +38,7 @@ async def create_pool(session: aiohttp.ClientSession, pool: Pool) -> Optional[Po
 
 @handle_errors
 @handle_api_response(response_type=Pool)
-async def update_pool(session: aiohttp.ClientSession, pool: Pool, changes: List[str] = []) -> Optional[Pool]:
+async def update_pool(session: aiohttp.ClientSession, pool: Pool, changes: list[str] = []) -> Pool:
     """
     Envoie une requête PUT pour mettre à jour une pool existante.
     """
@@ -51,8 +51,8 @@ async def update_pool(session: aiohttp.ClientSession, pool: Pool, changes: List[
 
 
 @handle_errors
-@handle_api_response(response_type=List[Pool])
-async def get_active_pools_by_league_code(session: aiohttp.ClientSession, league_code: str) -> Optional[List[Pool]]:
+@handle_api_response(response_type=list[Pool])
+async def get_active_pools_by_league_code(session: aiohttp.ClientSession, league_code: str) -> Optional[list[Pool]]:
     """
     Récupère les pools actives pour une ligue donnée.
     """
