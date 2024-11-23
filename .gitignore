@@ -169,5 +169,3 @@ local/postgres-data
 
 # environment variables
 .env
-.env.dev
-.env.local
