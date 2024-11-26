@@ -5,7 +5,7 @@ from config.logger_config import logger
 MAX_RETRIES = 3       # Nombre maximum de tentatives de téléchargement
 RETRY_DELAY = 2       # Délai en secondes entre chaque tentative en cas d'échec
 TIMEOUT = aiohttp.ClientTimeout(total=30)  # Timeout de 30 secondes pour chaque requête
-SEM = asyncio.Semaphore(20)  # Limiter à 20 téléchargements simultanés
+SEM = asyncio.Semaphore(10)  # Limiter à 20 téléchargements simultanés
 
 async def download_csv(
     session: aiohttp.ClientSession,
