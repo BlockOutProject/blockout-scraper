@@ -43,7 +43,7 @@ jobs:
 
       - name: Discord Notification
         if: success()
-        uses: Ilshidur/action-discord@v2
+        uses: Ilshidur/action-discord@master
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           message: |
@@ -54,7 +54,7 @@ jobs:
 
       - name: Discord Notification on Failure
         if: failure()
-        uses: Ilshidur/action-discord@v2
+        uses: Ilshidur/action-discord@master
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           message: |
