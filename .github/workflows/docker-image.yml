@@ -44,21 +44,19 @@ jobs:
       - name: Discord Notification
         if: success()
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          message: |
+          args: |
             ✅ **Déploiement réussi !**
             Le déploiement sur le VPS a été effectué avec succès.
-          username: 'CI/CD Bot'
-          avatar_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
 
       - name: Discord Notification on Failure
         if: failure()
         uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          message: |
+          args: |
             ❌ **Déploiement échoué !**
             Le déploiement sur le VPS a rencontré une erreur.
-          username: 'CI/CD Bot'
-          avatar_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
